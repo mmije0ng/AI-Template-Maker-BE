@@ -1,5 +1,1 @@
 rootProject.name = 'sparkle'
-/*azure.openai.endpoint=https://sparcleopenai.openai.azure.com/
-azure.openai.deployment-name=dall-e-3
-azure.openai.api-key=07da91e779254407b8f9e0d050f8b66e
-azure.openai.api-version=2024-02-01*/
