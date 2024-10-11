@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: sparkle
+  # 일단 h2로 설정
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./data/testdb  # 파일 기반 데이터베이스 (프로젝트 디렉토리에 생성)
+    username: root
+    password: root
+
+#  devtools:
+#    livereload:
+#      enabled: true
+#    restart:
+#      enabled: true
