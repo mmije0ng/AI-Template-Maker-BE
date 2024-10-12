@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @Tag(name = "문자 보내기 페이지", description = "문자 보내기 및 이미지 생성에 관한 API")
 @RestController
-@RequestMapping("/api/message-send")
+@RequestMapping("/api/message")
 public class MessageSendController {
 
     // 메시지 및 키워드 입력 후 이미지 생성
@@ -103,7 +103,7 @@ public class MessageSendController {
     // 문자 테스트 발송
     // 수정 필요
     @Operation(summary = "이미지 + 텍스트 문자 테스트 발송", description = "템플릿 기능을 통해 완성된 이미지 + 텍스트 문자 테스트 발송 요청")
-    @PostMapping("/send/test/{userId}")
+    @PostMapping("/test/{userId}")
     public CommonResponse<?> sendTestMessage(@PathVariable Long userId /*, @RequestBody MessageDto.SendRequestDto requestDto*/) {
         try {
 //            log.info("이미지 + 텍스트 문자 발송 요청 userId: {}", userId);

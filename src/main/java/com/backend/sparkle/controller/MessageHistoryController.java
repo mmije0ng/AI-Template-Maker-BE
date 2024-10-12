@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @Tag(name = "문자 내역 페이지", description = "사용자가 보낸 문자 내역에 관한 API")
 @RestController
-@RequestMapping("/api/message-history")
+@RequestMapping("/api/message/history")
 public class MessageHistoryController {
 
     @Operation(summary = "문자 내역 조회", description = "페이지 번호에 맞는 문자 내역을 3개씩 가져온다.")
