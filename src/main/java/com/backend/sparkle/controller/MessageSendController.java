@@ -63,6 +63,7 @@ public class MessageSendController {
             addressListNames.add("김선생 수학 학원 주소록");
 
             MessageDto.TemplateResponseDto responseDto = MessageDto.TemplateResponseDto.builder()
+
                     .inputMessage(requestDto.getInputMessage())
                     .selectedImageURL(requestDto.getSelectedImageURL())
                     .sendPhoneNumbers(sendPhoneNumbers)
