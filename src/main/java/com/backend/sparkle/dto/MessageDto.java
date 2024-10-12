@@ -85,6 +85,7 @@ public class MessageDto {
     // 이미지 + 텍스트 문자 전송 응답 dto
     public static class SendResponseDto {
         private Long userId; // 사용자 PK
+        private String inputMessage; // 입력된 메시지
         private String completeImageURL; // 템플릿 기능을 통해 완성된 이미지 URL 경로 = 발송 이미지
         private String sendDateTime; // 발송 날짜 및 시간
         private String sendPhoneNumber; // 발신번호

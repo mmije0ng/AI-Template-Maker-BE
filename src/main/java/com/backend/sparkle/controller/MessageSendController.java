@@ -45,7 +45,7 @@ public class MessageSendController {
         }
     }
 
-    // 템플릿 기능을 통해 완성된 이미지 + 텍스트를 뿌리오 API와 연동하여 문자 전송
+    // 템플릿 및 발송화면으로 전환
     @Operation(summary = "템플릿 및 발송화면",
             description = "생성된 이미지 3장 중 사용자가 1장 선택한 후 템플릿 및 발송화면으로 전환")
     @GetMapping("/template/{userId}")
@@ -86,8 +86,10 @@ public class MessageSendController {
         try {
             log.info("이미지 + 텍스트 문자 발송 요청 userId: {}", userId);
 
+            // 서비스 메서드에서 별도 수정 필요
             MessageDto.SendResponseDto responseDto = MessageDto.SendResponseDto.builder()
                     .userId(userId)
+                    .inputMessage(requestDto.getInputMessage())
                     .completeImageURL("https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
                     .sendDateTime("2024-10-13")
                     .sendPhoneNumber("010-0000-0000")

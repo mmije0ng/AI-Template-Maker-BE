@@ -2,7 +2,6 @@ package com.backend.sparkle.controller;
 
 import com.backend.sparkle.dto.AddressDto;
 import com.backend.sparkle.dto.CommonResponse;
-import com.backend.sparkle.dto.MessageDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,7 @@ public class AddressController {
     public CommonResponse<?> createAddressListToAddressByFile(@PathVariable(name = "userId") Long userId, @RequestBody AddressDto.UploadRequestDto requestDto) {
         try {
             log.info("주소록 파일 업로드 userId: {}", userId);
-
+            // 서비스 코드
             return CommonResponse.success("주소록 파일 업로드 성공", userId);
         } catch (Exception e) {
             log.error("주소록 파일 업로드 실패: {}", e.getMessage());
