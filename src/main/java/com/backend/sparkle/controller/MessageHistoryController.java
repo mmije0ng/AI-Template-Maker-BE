@@ -3,10 +3,12 @@ package com.backend.sparkle.controller;
 import com.backend.sparkle.dto.CommonResponse;
 import com.backend.sparkle.dto.MessageDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -18,14 +20,22 @@ import java.util.List;
 @RequestMapping("/api/message/history")
 public class MessageHistoryController {
 
-    @Operation(summary = "문자 내역 조회", description = "페이지 번호에 맞는 문자 내역을 3개씩 가져온다.")
+    @Operation(
+            summary = "문자 내역 조회",
+            description = "사용자의 userId와 page 번호를 입력받아, 페이지 번호에 맞는 문자 내역을 3개씩 최신순으로 가져온다.",
+            parameters = {
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1"),
+                    @Parameter(name = "pageNumber", description = "페이지 번호", required = true, example = "0")
+            }
+    )
     @GetMapping()
-    public CommonResponse<?> getMessageHistory(@RequestParam(name = "userId") Long userId, @RequestParam(name = "pageNumber") Integer pageNumber) {
+    public ResponseEntity<CommonResponse<Page<MessageDto.HistoryResponseDto>>> getMessageHistory(
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "pageNumber") Integer pageNumber) {
         try {
             log.info("문자 내역 조회 - userId: {}, page 번호: {}", userId, pageNumber);
 
             // 페이지 설정, 최신순으로 3개씩 가져오기
-//            Pageable pageable = PageRequest.of(pageNumber, 3, Sort.by("createdAt").descending());
             Pageable pageable = PageRequest.of(pageNumber, 3);
 
             // 실제 서비스에서는 DB에서 페이징 처리된 문자 내역을 조회해야 함
@@ -44,10 +54,11 @@ public class MessageHistoryController {
             // 페이징 처리된 리스트로 변환
             Page<MessageDto.HistoryResponseDto> responseDto = new PageImpl<>(subList, pageable, messageHistoryList.size());
 
-            return CommonResponse.success("문자 내역 조회 성공", responseDto);
+            return ResponseEntity.ok(CommonResponse.success("문자 내역 조회 성공", responseDto));
         } catch (Exception e) {
             log.error("문자 내역 조회 실패: {}", e.getMessage());
-            return CommonResponse.fail(HttpStatus.NOT_FOUND, "문자 내역 조회 실패");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(CommonResponse.fail("문자 내역 조회 실패"));
         }
     }
 }
