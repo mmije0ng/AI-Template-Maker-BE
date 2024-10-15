@@ -1,15 +1,19 @@
 spring:
-  application:
-    name: sparkle
-  # 일단 h2로 설정
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:file:./data/testdb  # 파일 기반 데이터베이스 (프로젝트 디렉토리에 생성)
-    username: root
-    password: root
+    url: jdbc:mysql://sparcle.mysql.database.azure.com:3306/precapstone_spakle_be
+    username: sparcle
+    password: heca704!!
+    hikari:
+      connection-timeout: 15000
 
-#  devtools:
-#    livereload:
-#      enabled: true
-#    restart:
-#      enabled: true
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+    logging.level:
+      org.hibernate.SQL: debug
