@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,11 +53,12 @@ public class MessageSendController {
             summary = "템플릿 및 발송화면",
             description = "생성된 이미지 3장 중 사용자가 1장을 선택한 후 템플릿 및 발송화면으로 전환",
             parameters = {
-                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1"),
+                    @Parameter(name = "selectedImageURL", description = "선택된 이미지 URL 경로", required = true, example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg"),
             }
     )
-    @GetMapping("/template/{userId}")
-    public ResponseEntity<CommonResponse<MessageDto.TemplateResponseDto>> getTemplateSendPage(@PathVariable Long userId, @RequestBody MessageDto.TemplateRequestDto requestDto) {
+    @GetMapping("/template")
+    public ResponseEntity<CommonResponse<MessageDto.TemplateResponseDto>> getTemplateSendPage(@RequestParam Long userId, @RequestParam String selectedImageURL) {
         try {
             log.info("템플릿 및 발송화면 요청 userId: {}", userId);
 
@@ -70,8 +72,7 @@ public class MessageSendController {
             addressNames.add("김선생 수학 학원 주소록");
 
             MessageDto.TemplateResponseDto responseDto = MessageDto.TemplateResponseDto.builder()
-                    .inputMessage(requestDto.getInputMessage())
-                    .selectedImageURL(requestDto.getSelectedImageURL())
+                    .selectedImageURL(selectedImageURL)
                     .sendPhoneNumbers(sendPhoneNumbers)
                     .addressNames(addressNames)
                     .build();

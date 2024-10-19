@@ -19,7 +19,7 @@ public class MessageDto {
     @Schema(description = "이미지 생성 요청 정보")
     public static class ImageGenerateRequestDto {
 
-        @Schema(description = "입력된 메시지", example =
+        @Schema(description = "발송 목적 및 내용", example =
                 """
                 한성대 피자짱 가게에서 방문 포장 시 50% 할인을 진행합니다.
                 위 광고 문자를 결제 시 직원분에게 보여주시면 됩니다.
@@ -27,7 +27,13 @@ public class MessageDto {
                 감사합니다.""")
         private String inputMessage;
 
-        @Schema(description = "입력된 키워드", example = "피자, 광고, 할인")
+        @Schema(description = "분위기 키워드", example = "차분한 분위기")
+        private String style;
+
+        @Schema(description = "계절감 키워드", example = "봄")
+        private String season;
+
+        @Schema(description = "사용자가 직접 입력된 키워드", example = "피자, 광고, 할인")
         private String keyWordMessage;
     }
 
@@ -69,14 +75,6 @@ public class MessageDto {
     @Schema(description = "템플릿 및 발송 화면 요청 정보")
     public static class TemplateRequestDto {
 
-        @Schema(description = "입력된 메시지", example =
-                """
-                한성대 피자짱 가게에서 방문 포장 시 50% 할인을 진행합니다.
-                위 광고 문자를 결제 시 직원분에게 보여주시면 됩니다.
-                일부 품목에 한해서 할인이 제한될 수 있습니다.
-                감사합니다.""")
-        private String inputMessage;
-
         @Schema(description = "선택된 이미지 URL 경로",
                 example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
         private String selectedImageURL;
@@ -85,15 +83,8 @@ public class MessageDto {
     @Getter
     @Builder
     @AllArgsConstructor
-    @Schema(description = "문자 내역 조회 응답 정보")
+    @Schema(description = "템플릿 및 발송 화면 응답 정보")
     public static class TemplateResponseDto {
-        @Schema(description = "입력된 메시지", example =
-                """
-                한성대 피자짱 가게에서 방문 포장 시 50% 할인을 진행합니다.
-                위 광고 문자를 결제 시 직원분에게 보여주시면 됩니다.
-                일부 품목에 한해서 할인이 제한될 수 있습니다.
-                감사합니다.""")
-        private String inputMessage;
 
         @Schema(description = "선택된 이미지 URL 경로",
                 example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
@@ -113,13 +104,9 @@ public class MessageDto {
     @NoArgsConstructor
     @Schema(description = "이미지 + 텍스트 문자 전송 요청 정보")
     public static class SendRequestDto {
-        @Schema(description = "입력된 메시지", example =
-                """
-                한성대 피자짱 가게에서 방문 포장 시 50% 할인을 진행합니다.
-                위 광고 문자를 결제 시 직원분에게 보여주시면 됩니다.
-                일부 품목에 한해서 할인이 제한될 수 있습니다.
-                감사합니다.""")
-        private String inputMessage;
+        @Schema(description = "발송 메시지 ", example =
+                "피자 광고에 관한 이미지를 만들어줘.")
+        private String sendMessage;
 
         @Schema(description = "템플릿 기능을 통해 완성된 이미지 URL 경로",
                 example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
