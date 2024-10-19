@@ -2,6 +2,7 @@ package com.backend.sparkle.service;
 
 import com.backend.sparkle.dto.DalleRequestDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -20,6 +21,7 @@ public class DalleService {
     @Value("${azure.dalle.key}")
     private String apiKey;
 
+    @Autowired
     public DalleService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
