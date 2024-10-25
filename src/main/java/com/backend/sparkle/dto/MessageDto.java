@@ -42,6 +42,12 @@ public class MessageDto {
                         "\"https://i.pinimg.com/564x/38/73/51/387351a404a2dcf47ada6a138b7a14e7.jpg\", " +
                         "\"https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg\"]")
         private List<String> generatedImageUrls;
+
+        @Schema(description = "수정된 프롬포트")
+        private List<String> revisedPrompts;
+
+        @Schema(description = "이미지 스타일")
+        private List<String> imageStyles;
     }
 
     @Getter

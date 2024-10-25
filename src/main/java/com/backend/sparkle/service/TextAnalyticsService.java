@@ -37,7 +37,7 @@ public class TextAnalyticsService {
         log.info("TextAnalyticsClient 생성 완료");
     }
 
-    // 핵심 구문 추출 기능
+    // Azure의 textAnalytics를 이용하여 핵심 사용자가 입력한 발송 목적 및 내용에서 키워드를 추출하는 메서드
     public List<String> extractKeyPhrases(MessageDto.ImageGenerateRequestDto requestDto) {
         // KeyPhrasesCollection을 반환하며, 이를 List<String>으로 변환
         List<String> keyPhrasesList = new ArrayList<>();
