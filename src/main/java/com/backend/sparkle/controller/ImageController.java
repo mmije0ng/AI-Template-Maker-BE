@@ -59,12 +59,8 @@ public class ImageController {
             log.error("Azure Dalle 이미지 생성 요청 오류");
             return ResponseEntity.status(e.getStatusCode()).body(CommonResponse.fail("Azure Dalle 이미지 생성 요청 오류\n" + e.getResponseBodyAsString()));
         } catch (RuntimeException e) {
-            log.error("Dalle API로부터 응답이 null이거나 비어 있습니다.");
-
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(CommonResponse.fail(e.getMessage()));
         } catch (JSONException e){
-            log.error("Dalle 이미지 생성 JSON 파싱 오류");
-
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(CommonResponse.fail("Dalle 이미지 생성 JSON 파싱 오류\n" +e.getMessage()));
         }
     }

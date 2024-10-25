@@ -19,16 +19,16 @@ public class MessageDto {
     @Schema(description = "이미지 생성 요청 정보")
     public static class ImageGenerateRequestDto {
 
-        @Schema(description = "발송 목적 및 내용", example = "피자 광고에 관한 이미지를 만들고 싶다.")
+        @Schema(description = "발송 목적 및 내용", example = "커피에 관한 이미지를 만들고 싶다.")
         private String inputMessage;
 
         @Schema(description = "분위기 키워드", example = "차분한 분위기")
         private String mood;
 
-        @Schema(description = "계절감 키워드", example = "봄")
+        @Schema(description = "계절감 키워드", example = "가을")
         private String season;
 
-        @Schema(description = "사용자가 직접 입력된 키워드", example = "피자")
+        @Schema(description = "사용자가 직접 입력된 키워드", example = "커피")
         private String keyWordMessage;
     }
 
