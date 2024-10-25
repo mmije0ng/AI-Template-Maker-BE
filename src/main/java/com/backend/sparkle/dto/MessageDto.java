@@ -23,12 +23,12 @@ public class MessageDto {
         private String inputMessage;
 
         @Schema(description = "분위기 키워드", example = "차분한 분위기")
-        private String style;
+        private String mood;
 
         @Schema(description = "계절감 키워드", example = "봄")
         private String season;
 
-        @Schema(description = "사용자가 직접 입력된 키워드", example = "피자, 광고, 할인")
+        @Schema(description = "사용자가 직접 입력된 키워드", example = "피자")
         private String keyWordMessage;
     }
 
@@ -43,10 +43,10 @@ public class MessageDto {
                         "\"https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg\"]")
         private List<String> generatedImageUrls;
 
-        @Schema(description = "수정된 프롬포트")
+        @Schema(description = "수정된 프롬포트 리스트")
         private List<String> revisedPrompts;
 
-        @Schema(description = "이미지 스타일")
+        @Schema(description = "생성된 이미지 스타일 리스트")
         private List<String> imageStyles;
     }
 

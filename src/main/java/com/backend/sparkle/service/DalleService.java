@@ -2,6 +2,10 @@ package com.backend.sparkle.service;
 
 import com.backend.sparkle.dto.DalleRequestDto;
 import com.backend.sparkle.dto.MessageDto;
+import com.backend.sparkle.strategy.mood.MoodStrategy;
+import com.backend.sparkle.strategy.mood.MoodStrategyFactory;
+import com.backend.sparkle.strategy.season.SeasonStrategy;
+import com.backend.sparkle.strategy.season.SeasonStrategyFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -62,9 +66,18 @@ public class DalleService {
     public MessageDto.ImageGenerateResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto, List<String> keyPhrases)
             throws WebClientResponseException {
 
+        // 분위기와 계절 전략을 선택하고 변환
+        MoodStrategy moodStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
+        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
+
+        // 변환된 분위기와 계절을 사용하여 Dalle 이미지를 생성
+        String transformedMood = moodStrategy.applyMood();
+        String transformedSeason = seasonStrategy.applySeason();
+
+
         // 각 스타일에 대해 비동기 요청을 병렬로 수행
         List<CompletableFuture<Result>> futures = styles.parallelStream()
-                .map(style -> CompletableFuture.supplyAsync(() -> generateImageForDalle(requestDto, keyPhrases, style)))
+                .map(style -> CompletableFuture.supplyAsync(() -> generateImageWithDalle(keyPhrases, style, transformedMood, transformedSeason)))
                 .toList();
 
         // 모든 비동기 요청의 결과를 리스트로 수집
@@ -73,9 +86,9 @@ public class DalleService {
                 .toList();
 
         // 결과 리스트에서 필요한 필드 수집
-        List<String> generatedImageUrls = results.stream().map(Result::getUrl).collect(Collectors.toList());
-        List<String> revisedPrompts = results.stream().map(Result::getRevisedPrompt).collect(Collectors.toList());
-        List<String> imageStyles = results.stream().map(Result::getStyle).collect(Collectors.toList());
+        List<String> generatedImageUrls = results.stream().map(Result::getUrl).collect(Collectors.toList()); // 이미지 생성 리스트
+        List<String> revisedPrompts = results.stream().map(Result::getRevisedPrompt).collect(Collectors.toList()); // 수정된 프롬포트 리스트
+        List<String> imageStyles = results.stream().map(Result::getStyle).collect(Collectors.toList()); // 이미지 스타일 리스트
 
         // ImageGenerateResponseDto 반환
         return MessageDto.ImageGenerateResponseDto.builder()
@@ -86,8 +99,7 @@ public class DalleService {
     }
 
     // 스타일별 이미지 생성 작업
-    private Result generateImageForDalle(MessageDto.ImageGenerateRequestDto requestDto, List<String> keyPhrases, String style) {
-        StringBuilder prompt = new StringBuilder();
+    private Result generateImageWithDalle(List<String> keyPhrases, String style, String transformedMood, String transformedSeason) {        StringBuilder prompt = new StringBuilder();
 
         // 1. 스타일별 프롬프트 설정
         prompt.append(style);
@@ -105,9 +117,9 @@ public class DalleService {
         prompt.append(promptWithKeywords.toString()).append(". ");
 
         // 5. 사용자가 입력한 정보 추가
-        prompt.append("Atmosphere: ").append(requestDto.getStyle()).append(". ");
+        prompt.append("Atmosphere: ").append(transformedMood).append(". ");
         prompt.append("Creating an image with this atmosphere. ");
-        prompt.append("Seasonal theme: ").append(requestDto.getSeason()).append(". ");
+        prompt.append("Seasonal theme: ").append(transformedSeason).append(". ");
         prompt.append("Using this season as the background theme. ");
 
         DalleRequestDto dalleRequestDto = DalleRequestDto.builder()
