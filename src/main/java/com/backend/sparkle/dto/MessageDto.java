@@ -28,7 +28,7 @@ public class MessageDto {
         @Schema(description = "계절감 키워드", example = "봄")
         private String season;
 
-        @Schema(description = "사용자가 직접 입력된 키워드", example = "[\"립스틱\", \"향수병\", \"여성스러운 분위기\"]")
+        @Schema(description = "사용자가 직접 입력한 키워드", example = "[\"립스틱\", \"향수병\", \"여성스러운 분위기\"]")
         private List<String> keyWordMessage;
     }
 
@@ -42,6 +42,9 @@ public class MessageDto {
                         "\"https://i.pinimg.com/564x/38/73/51/387351a404a2dcf47ada6a138b7a14e7.jpg\", " +
                         "\"https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg\"]")
         private List<String> generatedImageUrls;
+
+        @Schema(description = "사용자가 직접 입력한 키워드 + 추출된 키워드, 템플릿 이미지 삽입 시 unsplash를 통해 이미지를 가져올 때 해당 키워드를 바탕으로 이미지를 가져온다", example = "[\"립스틱\", \"향수\", \"여성스러운 분위기\"]")
+        private List<String> keyWord;
     }
 
     @Getter
@@ -60,7 +63,7 @@ public class MessageDto {
         private String sendPhoneNumber;
 
         @Schema(description = "주소록 별칭", example = "김선생 영어학원 주소록")
-        private String addressName;
+        private String addressName;;
     }
 
     @Getter
@@ -72,7 +75,6 @@ public class MessageDto {
         @Schema(description = "선택된 이미지 URL 경로",
                 example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
         private String selectedImageURL;
-
 
         @Schema(description = "발신번호 목록", example = "[\"010-0000-0000\", \"010-1234-5678\", \"010-5678-1234\"]")
         private List<String> sendPhoneNumbers;

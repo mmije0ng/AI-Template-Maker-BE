@@ -27,6 +27,8 @@ public class ImageService {
     private final WebClient webClient;
     private final BlobService blobService;
 
+    private final TextAnalyticsService textAnalyticsService;
+
     @Value("${azure.dalle.endpoint}")
     private String dalleAzureEndpoint;
 
@@ -48,9 +50,10 @@ public class ImageService {
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, TextAnalyticsService textAnalyticsService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
+        this.textAnalyticsService=textAnalyticsService;
     }
 
     // 서비스 초기화 시 DALL-E API URI 설정
@@ -83,6 +86,7 @@ public class ImageService {
 
         return MessageDto.ImageGenerateResponseDto.builder()
                 .generatedImageUrls(generatedImageUrls)
+                .keyWord(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage(), requestDto.getKeyWordMessage()))
                 .build();
     }
 
