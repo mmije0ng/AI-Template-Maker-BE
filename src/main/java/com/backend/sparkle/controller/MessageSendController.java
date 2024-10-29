@@ -2,13 +2,16 @@ package com.backend.sparkle.controller;
 
 import com.backend.sparkle.dto.CommonResponse;
 import com.backend.sparkle.dto.MessageDto;
+import com.backend.sparkle.service.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,32 +22,32 @@ import java.util.List;
 @RequestMapping("/api/message")
 public class MessageSendController {
 
+    private final ImageService imageService;
+
+    @Autowired
+    public MessageSendController(ImageService imageService){
+        this.imageService = imageService;
+    }
+
     @Operation(
-            summary = "메시지 및 키워드 입력 후 이미지 생성",
-            description = "사용자가 메시지 및 키워드를 입력 후 이미지 생성하기 버튼을 클릭하여 3개의 이미지를 생성",
+            summary = "발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 생성",
+            description = "사용자가 발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 생성하기 버튼을 클릭하여 4개의 이미지를 생성",
             parameters = {
                     @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
             }
     )
     @PostMapping("/generate/{userId}")
     public ResponseEntity<CommonResponse<MessageDto.ImageGenerateResponseDto>> createImages(@PathVariable Long userId, @RequestBody MessageDto.ImageGenerateRequestDto requestDto) {
+        log.info("이미지 생성 요청 userId: {}", userId);
         try {
-            log.info("이미지 생성 요청 userId: {}", userId);
-
-            List<String> imageUrlList = new ArrayList<>();
-            imageUrlList.add("https://i.pinimg.com/564x/48/3d/a7/483da78ca17fa011004bac70b7e7c763.jpg");
-            imageUrlList.add("https://i.pinimg.com/564x/38/73/51/387351a404a2dcf47ada6a138b7a14e7.jpg");
-            imageUrlList.add("https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg");
-
-            MessageDto.ImageGenerateResponseDto responseDto = MessageDto.ImageGenerateResponseDto.builder()
-                    .generatedImageUrls(imageUrlList)
-                    .build();
-
+            MessageDto.ImageGenerateResponseDto responseDto = imageService.generateImages(requestDto);
             return ResponseEntity.ok(CommonResponse.success("이미지 생성 성공", responseDto));
-        } catch (Exception e) {
+        } catch (WebClientResponseException e) {
+            log.error("Azure Dalle 이미지 생성 요청 오류: {}", e.getMessage());
+            return ResponseEntity.status(e.getStatusCode()).body(CommonResponse.fail("Azure Dalle 이미지 생성 요청 오류"));
+        }  catch (Exception e) {
             log.error("이미지 생성 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(CommonResponse.fail("이미지 생성 실패"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.fail(e.getMessage()));
         }
     }
 
@@ -52,11 +55,12 @@ public class MessageSendController {
             summary = "템플릿 및 발송화면",
             description = "생성된 이미지 3장 중 사용자가 1장을 선택한 후 템플릿 및 발송화면으로 전환",
             parameters = {
-                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1"),
+                    @Parameter(name = "selectedImageURL", description = "선택된 이미지 URL 경로", required = true, example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg"),
             }
     )
-    @GetMapping("/template/{userId}")
-    public ResponseEntity<CommonResponse<MessageDto.TemplateResponseDto>> getTemplateSendPage(@PathVariable Long userId, @RequestBody MessageDto.TemplateRequestDto requestDto) {
+    @GetMapping("/template")
+    public ResponseEntity<CommonResponse<MessageDto.TemplateResponseDto>> getTemplateSendPage(@RequestParam Long userId, @RequestParam String selectedImageURL) {
         try {
             log.info("템플릿 및 발송화면 요청 userId: {}", userId);
 
@@ -70,8 +74,7 @@ public class MessageSendController {
             addressNames.add("김선생 수학 학원 주소록");
 
             MessageDto.TemplateResponseDto responseDto = MessageDto.TemplateResponseDto.builder()
-                    .inputMessage(requestDto.getInputMessage())
-                    .selectedImageURL(requestDto.getSelectedImageURL())
+                    .selectedImageURL(selectedImageURL)
                     .sendPhoneNumbers(sendPhoneNumbers)
                     .addressNames(addressNames)
                     .build();
