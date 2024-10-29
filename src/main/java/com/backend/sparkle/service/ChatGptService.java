@@ -40,20 +40,29 @@ public class ChatGptService {
         log.info("ChatGpt WebClient 초기화 완료. API URL: {}", apiUrl);
     }
 
-    public String translateText(String inputMessage) {
-        // 요청 JSON 생성
+    /**
+     * 번역 메서드: 입력 메시지를 지정한 언어로 번역합니다.
+     *
+     * @param inputMessage 번역할 텍스트
+     * @param targetLanguage 대상 언어 ("en" 또는 "ko")
+     * @return 번역된 텍스트
+     */
+    public String translateText(String inputMessage, String targetLanguage) {
+        // 대상 언어에 따른 프롬프트 설정
+        String prompt = targetLanguage.equalsIgnoreCase("en")
+                ? "아래 내용을 영어로 번역해줘"
+                : "아래 영어 텍스트를 한국어로 번역해줘";
+
         ChatGptDto.ChatRequestDto chatRequestDto = new ChatGptDto.ChatRequestDto(
                 "gpt-4",
                 4000,
                 0.0,
                 List.of(
-                        new ChatGptDto.ChatRequestDto.Message("user", "아래 쓸 내용을 영어로 번역해줘"),
-                        new ChatGptDto.ChatRequestDto.Message("assistant", "물론입니다! 번역할 내용을 제공해 주시면 영어로 번역해 드리겠습니다."),
+                        new ChatGptDto.ChatRequestDto.Message("user", prompt),
                         new ChatGptDto.ChatRequestDto.Message("user", inputMessage)
                 )
         );
 
-        // WebClient를 사용하여 OpenAI API 호출하고 응답을 String으로 수신
         String responseBody = webClient.post()
                 .bodyValue(chatRequestDto)
                 .retrieve()
@@ -61,28 +70,19 @@ public class ChatGptService {
                 .block();
 
         try {
-            // 응답 JSON 파싱
             JsonNode root = objectMapper.readTree(responseBody);
             JsonNode choicesNode = root.path("choices");
 
             if (choicesNode.isArray() && choicesNode.size() > 0) {
-                // "content" 필드에서 JSON 형식의 텍스트를 파싱하여 "englishText" 추출
                 String content = choicesNode.get(0).path("message").path("content").asText();
-
                 if (!content.isEmpty()) {
-                    log.info("번역된 텍스트: " + content);
+//                    log.info("번역된 텍스트: " + content);
                     return content;
-                } else {
-                    log.info("번역된 텍스트 없음");
-                    throw new RuntimeException("번역 결과를 가져오는 데 실패했습니다.");
                 }
-            } else {
-                log.info("번역된 텍스트 없음");
-                throw new RuntimeException("번역 결과를 가져오는 데 실패했습니다.");
             }
         } catch (Exception e) {
             log.error("JSON 파싱 중 오류 발생: ", e);
-            throw new RuntimeException("JSON 파싱 오류", e);
         }
+        throw new RuntimeException("번역 실패: " + targetLanguage + "로 변환할 수 없습니다.");
     }
 }

@@ -38,25 +38,23 @@ public class TextAnalyticsService {
                 .credential(new AzureKeyCredential(cognitiveApiKey))
                 .endpoint(cognitiveAzureEndpoint)
                 .buildClient();
-        
+
         log.info("TextAnalyticsClient 생성 완료");
     }
 
     // Azure의 textAnalytics를 이용하여 핵심 사용자가 입력한 발송 목적 및 내용에서 키워드를 추출하는 메서드
-    public List<String> extractKeyPhrases(MessageDto.ImageGenerateRequestDto requestDto) {
-        // KeyPhrasesCollection을 반환하며, 이를 List<String>으로 변환
+    public List<String> extractKeyPhrases(String inputMessage, List<String> keyWordMessage) {
         List<String> keyPhrases = new ArrayList<>();
 
-        textAnalyticsClient.extractKeyPhrases(chatGptService.translateText(requestDto.getInputMessage())).forEach(keyPhrase -> {
-            keyPhrases.add(keyPhrase); // 키워드 추가
-            log.info("추출된 키워드: {}", keyPhrase); // 키워드 출력
+        // 사용자가 직접 입력한 키워드 리스트 추가
+        keyPhrases.addAll(keyWordMessage);
+
+        // Azure 텍스트 분석 API를 사용해 영어 키워드 추출 후, 한국어로 번역하여 리스트에 추가
+        textAnalyticsClient.extractKeyPhrases(chatGptService.translateText(inputMessage, "en")).forEach(keyPhrase -> {
+            String translatedKeyPhrase = chatGptService.translateText(keyPhrase, "kr");
+            keyPhrases.add(translatedKeyPhrase); // 번역된 키워드 추가
+            log.info("추출된 키워드 (한국어): {}", translatedKeyPhrase);
         });
-
-
-//        textAnalyticsClient.extractKeyPhrases(requestDto.getInputMessage()).forEach(keyPhrase -> {
-//            keyPhrasesList.add(keyPhrase); // 키워드 추가
-//            log.info("추출된 키워드: {}", keyPhrase); // 키워드 출력
-//        });
 
         log.info("키워드 추출 완료");
 
