@@ -64,7 +64,6 @@ public class ChatGptService {
             // 응답 JSON 파싱
             JsonNode root = objectMapper.readTree(responseBody);
             JsonNode choicesNode = root.path("choices");
-            log.info(responseBody);
 
             if (choicesNode.isArray() && choicesNode.size() > 0) {
                 // "content" 필드에서 JSON 형식의 텍스트를 파싱하여 "englishText" 추출
