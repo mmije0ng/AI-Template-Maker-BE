@@ -39,6 +39,9 @@ dependencies {
 	implementation 'com.azure:azure-ai-textanalytics:5.3.0'
 	implementation 'com.azure.spring:spring-cloud-azure-starter-storage-blob'
 	implementation 'com.azure:azure-storage-blob:12.19.0'
+	//
+	implementation 'org.apache.poi:poi:5.2.2'
+	implementation 'org.apache.poi:poi-ooxml:5.2.2'
 
 	// MySQL and H2 Databases
 	runtimeOnly 'com.mysql:mysql-connector-j'
