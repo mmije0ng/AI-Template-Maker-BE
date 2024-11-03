@@ -3,6 +3,7 @@ package com.backend.sparkle.controller;
 import com.backend.sparkle.dto.CommonResponse;
 import com.backend.sparkle.dto.MessageDto;
 import com.backend.sparkle.service.ImageService;
+import com.backend.sparkle.service.MessageService;
 import com.backend.sparkle.service.PpurioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @Tag(name = "문자 보내기 페이지", description = "문자 보내기 및 이미지 생성에 관한 API")
@@ -32,11 +34,13 @@ public class MessageSendController {
 
     private final ImageService imageService;
     private final PpurioService ppurioService;
+    private final MessageService messageService;
 
     @Autowired
-    public MessageSendController(ImageService imageService, PpurioService ppurioService) {
+    public MessageSendController(ImageService imageService, PpurioService ppurioService, MessageService messageService) {
         this.imageService = imageService;
         this.ppurioService = ppurioService;
+        this.messageService = messageService;
     }
 
     @Operation(
@@ -62,45 +66,11 @@ public class MessageSendController {
     }
 
     @Operation(
-            summary = "템플릿 및 발송화면",
-            description = "생성된 이미지 3장 중 사용자가 1장을 선택한 후 템플릿 및 발송화면으로 전환",
-            parameters = {
-                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1"),
-                    @Parameter(name = "selectedImageURL", description = "선택된 이미지 URL 경로", required = true, example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg"),
-            }
-    )
-    @GetMapping("/template")
-    public ResponseEntity<CommonResponse<MessageDto.TemplateResponseDto>> getTemplateSendPage(@RequestParam Long userId, @RequestParam String selectedImageURL) {
-        try {
-            log.info("템플릿 및 발송화면 요청 userId: {}", userId);
-
-            List<String> sendPhoneNumbers = new ArrayList<>();
-            sendPhoneNumbers.add("010-0000-0000");
-            sendPhoneNumbers.add("010-1234-5678");
-            sendPhoneNumbers.add("010-5678-1234");
-
-            List<String> addressNames = new ArrayList<>();
-            addressNames.add("한성대 주소록");
-            addressNames.add("김선생 수학 학원 주소록");
-
-            MessageDto.TemplateResponseDto responseDto = MessageDto.TemplateResponseDto.builder()
-                    .selectedImageURL(selectedImageURL)
-                    .sendPhoneNumbers(sendPhoneNumbers)
-                    .addressNames(addressNames)
-                    .build();
-
-            return ResponseEntity.ok(CommonResponse.success("템플릿 및 발송화면 요청 성공", responseDto));
-        } catch (Exception e) {
-            log.error("템플릿 및 발송화면 요청 실패: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(CommonResponse.fail("템플릿 및 발송화면 요청 실패"));
-        }
-    }
-
-
-    @Operation(
             summary = "단일 전화번호와 주소록 엑셀 파일을 통해 문자 전송",
-            description = "단일 전화번호와 업로드된 주소록에 있는 모든 전화번호로 문자 메시지를 전송합니다."
+            description = "단일 전화번호와 업로드된 주소록에 있는 모든 전화번호로 문자 메시지를 전송합니다.",
+            parameters = {
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+            }
     )
     @PostMapping(value = "/send/{userId}", consumes = {"multipart/form-data"})
     public ResponseEntity<CommonResponse<Long>> sendUnifiedMessage(
@@ -133,6 +103,7 @@ public class MessageSendController {
             );
 
             if (sendSuccess) {
+                messageService.addMessage(userId, requestDto); // 메시지 내역 저장
                 return ResponseEntity.ok(CommonResponse.success("통합 문자 전송 성공", userId));
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -165,6 +136,24 @@ public class MessageSendController {
     }
 
 
+    // 문자 발송 완료 후 화면
+    @Operation(
+            summary = "문자 보내기 완료 후",
+            description = "문자 보내기 완료 후 사용자가 보낸 메시지에 대한 정보를 화면에 띄운다.",
+            parameters = {
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+            }
+    )
+    @GetMapping("/complete/{userId}")
+    public ResponseEntity< CommonResponse<MessageDto.SendCompleteResponseDto> > getSendCompleteResponse (@PathVariable Long userId){
+        try {
+            return ResponseEntity.ok(CommonResponse.success("문자 보내기 완료 후 요청 성공", messageService.getSendCompleteMessage(userId)));
+        } catch (NoSuchElementException e){
+            log.error("문자 보내기 완료 후 요청 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(CommonResponse.fail("문자 보내기 완료 후 요청 실패"));
+        }
+    }
 
 
     // 테스트 발송 메서드 추가

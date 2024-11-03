@@ -43,44 +43,8 @@ public class MessageDto {
                         "\"https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg\"]")
         private List<String> generatedImageUrls;
 
-        @Schema(description = "사용자가 직접 입력한 키워드 + 추출된 키워드, 템플릿 이미지 삽입 시 unsplash를 통해 이미지를 가져올 때 해당 키워드를 바탕으로 이미지를 가져온다", example = "[\"립스틱\", \"향수\", \"여성스러운 분위기\"]")
-        private List<String> keyWord;
-    }
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @Schema(description = "문자 내역 조회 응답 정보")
-    public static class HistoryResponseDto {
-        @Schema(description = "이미지 URL 경로",
-                example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
-        private String imageURL;
-
-        @Schema(description = "발송일자", example = "2024-10-13")
-        private String sendDateTime;
-
-        @Schema(description = "발신번호", example = "010-1234-5678")
-        private String sendPhoneNumber;
-
-        @Schema(description = "주소록 별칭", example = "김선생 영어학원 주소록")
-        private String addressName;;
-    }
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @Schema(description = "템플릿 및 발송 화면 응답 정보")
-    public static class TemplateResponseDto {
-
-        @Schema(description = "선택된 이미지 URL 경로",
-                example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
-        private String selectedImageURL;
-
-        @Schema(description = "발신번호 목록", example = "[\"010-0000-0000\", \"010-1234-5678\", \"010-5678-1234\"]")
-        private List<String> sendPhoneNumbers;
-
-        @Schema(description = "수신번호 주소록 별칭 목록", example = "[\"한성대 주소록\", \"김선생 수학 학원 주소록\"]")
-        private List<String> addressNames;
+//        @Schema(description = "사용자가 직접 입력한 키워드 + 추출된 키워드, 템플릿 이미지 삽입 시 unsplash를 통해 이미지를 가져올 때 해당 키워드를 바탕으로 이미지를 가져온다", example = "[\"립스틱\", \"향수\", \"여성스러운 분위기\"]")
+//        private List<String> keyWord;
     }
 
     @Getter
@@ -105,10 +69,7 @@ public class MessageDto {
         @Schema(description = "발신번호", example = "010-1234-5678")
         private String sendPhoneNumber;
 
-        @Schema(description = "주소록 별칭", example = "김선생 영어학원 주소록")
-        private String addressName;
-
-        @Schema(description = "테스트 수신 번호, 뿌리오 API 연동 확인을 위해서 테스트로 수신번호 하나 요청", example = "010-0000-0000")
+        @Schema(description = "단일 수신번호, 엑셀 파일 목록에 있는 수신번호가 아닌 사용자가 별도로 입력한 수신번호", example = "010-0000-0000")
         private String testSendPhoneNumber;
 
         @Schema(description = "발송 타입", example = "0이면 즉시 발송, 1이면 예약 발송")
@@ -118,4 +79,39 @@ public class MessageDto {
         private String sendDateTime;
     }
 
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "문자 보내기 완료 후 응답 정보")
+    public static class SendCompleteResponseDto {
+        @Schema(description = "이미지 URL 경로",
+                example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
+        private String imageURL;
+
+        @Schema(description = "발송일자", example = "2024-10-13 14:06:37")
+        private String sendDateTime;
+
+        @Schema(description = "발신번호", example = "010-1234-5678")
+        private String sendPhoneNumber;
+    }
+
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "문자 내역 조회 응답 정보")
+    public static class HistoryResponseDto {
+        @Schema(description = "이미지 URL 경로",
+                example = "https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg")
+        private String imageURL;
+
+        @Schema(description = "발송일자", example = "2024-10-13")
+        private String sendDateTime;
+
+        @Schema(description = "발신번호", example = "010-1234-5678")
+        private String sendPhoneNumber;
+
+        @Schema(description = "주소록 별칭", example = "김선생 영어학원 주소록")
+        private String addressName;
+    }
 }

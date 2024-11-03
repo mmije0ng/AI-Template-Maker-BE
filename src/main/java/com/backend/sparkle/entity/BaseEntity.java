@@ -21,17 +21,17 @@ public abstract class BaseEntity {
 
     @CreatedDate
     @Column(name="created_at",nullable = false,columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name="updated_at",nullable = false,columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 
     public LocalDateTime getCreatedAt(){
-        return created_at;
+        return createdAt;
     }
     public LocalDateTime getUpdateAt(){
-        return updated_at;
+        return updatedAt;
     }
 
 }

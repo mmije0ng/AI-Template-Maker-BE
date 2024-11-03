@@ -86,7 +86,7 @@ public class ImageService {
 
         return MessageDto.ImageGenerateResponseDto.builder()
                 .generatedImageUrls(generatedImageUrls)
-                .keyWord(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage(), requestDto.getKeyWordMessage()))
+//                .keyWord(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage(), requestDto.getKeyWordMessage()))
                 .build();
     }
 
@@ -168,13 +168,16 @@ public class ImageService {
     // 이미지 생성에 필요한 프롬프트 생성
     private String generatePrompt(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
         return String.format("%s를 만들어 주세요. 이 이미지는 깨끗하고 간결한 디자인을 강조하며, 필수적인 요소에 집중하여 표현합니다. " +
-                        "텍스트나 문자는 절대로 포함되지 않으며, 어떠한 글자나 글씨도 나타나지 않아야 합니다. 설명: %s. " +
+                        "이미에는 텍스트나 문자는 절대로 포함되지 않으며, 어떠한 글자나 글씨도 나타나지 않아야 합니다." +
+                        " 설명: %s. " +
                         "다음 키워드를 반영하여 시각적으로 표현합니다: %s. 분위기는 %s이며, 이 분위기를 반영하여 이미지를 생성합니다. " +
-                        "계절적 요소로는 %s을(를) 배경 테마로 설정합니다.",
+                        "계절적 요소로는 %s을(를) 배경 테마로 설정합니다." +
+                        "이미지에는 텍스트와 글자는 어떤 형태로도 포함되지 않도록 만들어주세요.",
                 imageStyle,
                 requestDto.getInputMessage(),
                 String.join(", ", requestDto.getKeyWordMessage()),
                 requestDto.getMood(),
                 requestDto.getSeason());
     }
+
 }
