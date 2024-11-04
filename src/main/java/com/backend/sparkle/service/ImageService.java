@@ -2,6 +2,10 @@ package com.backend.sparkle.service;
 
 import com.backend.sparkle.dto.DalleRequestDto;
 import com.backend.sparkle.dto.MessageDto;
+import com.backend.sparkle.strategy.mood.MoodStrategy;
+import com.backend.sparkle.strategy.mood.MoodStrategyFactory;
+import com.backend.sparkle.strategy.season.SeasonStrategy;
+import com.backend.sparkle.strategy.season.SeasonStrategyFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -27,6 +31,7 @@ public class ImageService {
 
     private final WebClient webClient;
     private final BlobService blobService;
+    private final ChatGptService chatGptService;
 
     @Value("${azure.dalle.endpoint}")
     private String dalleAzureEndpoint;
@@ -41,17 +46,25 @@ public class ImageService {
 
     // 이미지 생성에 사용될 다양한 스타일 목록 정의
     private static final List<String> styles = List.of(
-            "파스텔 색감으로 표현된 미니멀리스트 일러스트 스타일, 단순하고 깔끔한 구도와 부드러운 음영 효과가 특징인 이미지",
-            "매우 세밀하고 사실적인 사진 스타일, 현실감 있고 디테일이 살아있는 고해상도 이미지",
-            "밝고 생동감 있는 색감을 사용한 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
-            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 간결하게 표현된 이미지"
+            "Minimalist illustration style with pastel tones, featuring a simple and clean composition with soft shading",
+            "Highly detailed and realistic photographic style, a high-resolution image with vivid realism and fine detail",
+            "Animation style with bright and vibrant colors, presenting characters and background in a simplified form",
+            "Modern digital art style, an image highlighted by rich colors and creative design elements in a minimalistic layout"
     );
+
+//    private static final List<String> styles = List.of(
+//            "파스텔 색감으로 표현된 미니멀리스트 일러스트 스타일, 단순하고 깔끔한 구도와 부드러운 음영 효과가 특징인 이미지",
+//            "매우 세밀하고 사실적인 사진 스타일, 현실감 있고 디테일이 살아있는 고해상도 이미지",
+//            "밝고 생동감 있는 색감을 사용한 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
+//            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 간결하게 표현된 이미지"
+//    );
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
     public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
+        this.chatGptService = chatGptService;
     }
 
     // 서비스 초기화 시 DALL-E API URI 설정
@@ -173,18 +186,27 @@ public class ImageService {
 
     // 이미지 생성에 필요한 프롬프트 생성
     private String generatePrompt(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
+        // 스타일과 계절 전략을 선택하고 변환
+        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
+        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
+
+        // 변환된 스타일과 계절을 사용하여 Dalle 이미지를 생성
+        String transformedMood= styleStrategy.applyMood();
+        String transformedSeason = seasonStrategy.applySeason();
+
         return String.format(
-                "%s 스타일의 이미지를 만들어 주세요. 이 이미지는 깨끗하고 간결한 디자인과 레이아웃을 강조합니다. " +
-                        "텍스트와 사람 형상은 포함되지 않아야 하며, 어떠한 글자나 글씨도 나타나지 않도록 해 주세요. " +
-                        "설명: %s. " +
-                        "다음 키워드를 참고하여 시각적으로 표현해 주세요: %s. 분위기는 %s로 설정하고, 이를 반영하여 이미지를 생성합니다. " +
-                        "배경은 %s 계절 테마를 바탕으로 단색으로 간결하게 설정해 주세요. 복잡한 배경 요소는 제외해 주세요.",
+                "You are an advanced AI model for generating high-quality images. Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
+                        "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
+                        "Description: %s. " +
+                        "Visually express the following keywords: %s. Set the mood to %s and reflect this atmosphere in the image. " +
+                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements.",
                 imageStyle,
-                requestDto.getInputMessage(),
-                String.join(", ", requestDto.getKeyWordMessage()),
-                requestDto.getMood(),
-                requestDto.getSeason()
+                chatGptService.translateText(requestDto.getInputMessage(), "en"),
+                chatGptService.translateText(String.join(", ", requestDto.getKeyWordMessage()), "en"),
+                transformedMood,
+                transformedSeason
         );
+
     }
 
 }
