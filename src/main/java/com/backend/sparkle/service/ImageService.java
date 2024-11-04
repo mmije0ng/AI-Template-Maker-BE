@@ -195,11 +195,12 @@ public class ImageService {
         String transformedSeason = seasonStrategy.applySeason();
 
         return String.format(
-                "You are an advanced AI model for generating high-quality images. Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
+                "Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
                         "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
                         "Description: %s. " +
                         "Visually express the following keywords: %s. Set the mood to %s and reflect this atmosphere in the image. " +
-                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements.",
+                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements. " +
+                        "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
                 chatGptService.translateText(requestDto.getInputMessage(), "en"),
                 chatGptService.translateText(String.join(", ", requestDto.getKeyWordMessage()), "en"),
