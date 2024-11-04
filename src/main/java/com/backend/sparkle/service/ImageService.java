@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -26,8 +27,6 @@ public class ImageService {
 
     private final WebClient webClient;
     private final BlobService blobService;
-
-    private final TextAnalyticsService textAnalyticsService;
 
     @Value("${azure.dalle.endpoint}")
     private String dalleAzureEndpoint;
@@ -44,16 +43,15 @@ public class ImageService {
     private static final List<String> styles = List.of(
             "파스텔 색감으로 표현된 미니멀리스트 일러스트 스타일, 단순하고 깔끔한 구도와 부드러운 음영 효과가 특징인 이미지",
             "매우 세밀하고 사실적인 사진 스타일, 현실감 있고 디테일이 살아있는 고해상도 이미지",
-            "밝고 생동감 있는 색감을 사용한 미니멀리스트 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
-            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 이미지"
+            "밝고 생동감 있는 색감을 사용한 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
+            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 간결하게 표현된 이미지"
     );
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, TextAnalyticsService textAnalyticsService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
-        this.textAnalyticsService=textAnalyticsService;
     }
 
     // 서비스 초기화 시 DALL-E API URI 설정
@@ -62,6 +60,7 @@ public class ImageService {
         this.dalleURI = String.format("%s?api-version=%s", dalleAzureEndpoint, dalleApiVersion);
     }
 
+
     // 이미지 생성 요청 메소드
     public MessageDto.ImageGenerateResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -69,7 +68,7 @@ public class ImageService {
 
         // 스타일 목록을 비동기 처리하여 이미지 생성 요청
         List<CompletableFuture<String>> futures = styles.parallelStream()
-                .map(style -> CompletableFuture.supplyAsync(() -> retryGenerateImage(style, requestDto)))
+                .map(style -> retryGenerateImage(style, requestDto))
                 .collect(Collectors.toList());
 
         // 모든 비동기 요청의 결과를 모아 리스트로 반환
@@ -86,22 +85,26 @@ public class ImageService {
 
         return MessageDto.ImageGenerateResponseDto.builder()
                 .generatedImageUrls(generatedImageUrls)
-//                .keyWord(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage(), requestDto.getKeyWordMessage()))
                 .build();
     }
 
-    // 이미지 생성 요청을 재시도
-    private String retryGenerateImage(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
+    // 이미지 생성 요청 재시도
+    private CompletableFuture<String> retryGenerateImage(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
         int maxRetries = 5;  // 최대 재시도 횟수
         int retryCount = 0;
 
+        CompletableFuture<String> result = new CompletableFuture<>();
+
         while (retryCount < maxRetries) {
             try {
-                return generateImageWithDalle(imageStyle, requestDto); // 이미지 생성 요청 시도
+                return generateImageWithDalle(imageStyle, requestDto)
+                        .thenApply(resultUrl -> {
+                            return resultUrl;
+                        });
             } catch (WebClientResponseException e) {
-                if (e.getStatusCode().value() == 429) {  // Too Many Requests (429 오류) 발생 시 재시도
+                if (e.getStatusCode().value() == 429 || e.getStatusCode().value() == 400) {  // Too Many Requests (429 오류), 400 발생 시 재시도
                     retryCount++;
-                    log.warn("429 Too Many Requests 발생. {}초 후 재시도 ({}/{})", retryCount * 8, retryCount, maxRetries);
+                    log.warn("{}초 후 재시도 ({}/{})", retryCount * 8, retryCount, maxRetries);
                     try {
                         TimeUnit.SECONDS.sleep(retryCount * 8); // 재시도 간격을 증가시키며 대기
                     } catch (InterruptedException ie) {
@@ -109,15 +112,17 @@ public class ImageService {
                     }
                 } else {
                     log.error("Dalle API 요청 중 오류 발생: {}", e.getMessage());
-                    throw e;
+                    result.completeExceptionally(e); // 예외 처리
+                    return result;
                 }
             }
         }
-        throw new RuntimeException("Dalle API 요청이 여러 번 실패했습니다.");
+        result.completeExceptionally(new RuntimeException("Dalle API 요청이 여러 번 실패했습니다."));
+        return result;
     }
 
     // DALL-E API에 이미지 생성 요청
-    private String generateImageWithDalle(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
+    private CompletableFuture<String> generateImageWithDalle(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
         String prompt = generatePrompt(imageStyle, requestDto); // 생성된 프롬프트
 
         // DALL-E API에 전송할 요청 데이터 준비
@@ -131,10 +136,9 @@ public class ImageService {
 
         log.info("Dalle 이미지 생성 요청, prompt: {}", prompt);
 
-        String responseBody;
         try {
             // DALL-E API 요청 및 응답 수신
-            responseBody = webClient.post()
+            String responseBody = webClient.post()
                     .uri(dalleURI)
                     .header("api-key", dalleApiKey)
                     .header("Content-Type", "application/json")
@@ -154,8 +158,10 @@ public class ImageService {
             JSONObject dataObject = dataArray.getJSONObject(0);
             String url = dataObject.getString("url");
 
-            // 추출한 URL을 Blob Storage에 업로드하여 새로운 URL 반환
-            return blobService.uploadImageByUrl(url);
+            log.info("Dalle revised_prompt: {}", dataObject.getString("revised_prompt"));
+
+            // 비동기적으로 Blob Storage에 업로드하여 새로운 URL 반환
+            return CompletableFuture.supplyAsync(() -> blobService.uploadImageByUrl(url));
         } catch (JSONException e) {
             log.error("JSON 파싱 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException("JSON 파싱 오류", e);
@@ -167,17 +173,18 @@ public class ImageService {
 
     // 이미지 생성에 필요한 프롬프트 생성
     private String generatePrompt(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
-        return String.format("%s를 만들어 주세요. 이 이미지는 깨끗하고 간결한 디자인을 강조하며, 필수적인 요소에 집중하여 표현합니다. " +
-                        "이미에는 텍스트나 문자는 절대로 포함되지 않으며, 어떠한 글자나 글씨도 나타나지 않아야 합니다." +
-                        " 설명: %s. " +
-                        "다음 키워드를 반영하여 시각적으로 표현합니다: %s. 분위기는 %s이며, 이 분위기를 반영하여 이미지를 생성합니다. " +
-                        "계절적 요소로는 %s을(를) 배경 테마로 설정합니다." +
-                        "이미지에는 텍스트와 글자는 어떤 형태로도 포함되지 않도록 만들어주세요.",
+        return String.format(
+                "%s 스타일의 이미지를 만들어 주세요. 이 이미지는 깨끗하고 간결한 디자인과 레이아웃을 강조합니다. " +
+                        "텍스트와 사람 형상은 포함되지 않아야 하며, 어떠한 글자나 글씨도 나타나지 않도록 해 주세요. " +
+                        "설명: %s. " +
+                        "다음 키워드를 참고하여 시각적으로 표현해 주세요: %s. 분위기는 %s로 설정하고, 이를 반영하여 이미지를 생성합니다. " +
+                        "배경은 %s 계절 테마를 바탕으로 단색으로 간결하게 설정해 주세요. 복잡한 배경 요소는 제외해 주세요.",
                 imageStyle,
                 requestDto.getInputMessage(),
                 String.join(", ", requestDto.getKeyWordMessage()),
                 requestDto.getMood(),
-                requestDto.getSeason());
+                requestDto.getSeason()
+        );
     }
 
 }
