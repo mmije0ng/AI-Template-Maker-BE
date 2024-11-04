@@ -69,7 +69,7 @@ public class MessageSendController {
             summary = "단일 전화번호와 주소록 엑셀 파일을 통해 문자 전송",
             description = "단일 전화번호와 업로드된 주소록에 있는 모든 전화번호로 문자 메시지를 전송합니다.",
             parameters = {
-                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1"),
             }
     )
     @PostMapping(value = "/send/{userId}", consumes = {"multipart/form-data"})
@@ -82,6 +82,8 @@ public class MessageSendController {
             // JSON String을 SendRequestDto 객체로 변환
             ObjectMapper objectMapper = new ObjectMapper();
             MessageDto.SendRequestDto requestDto = objectMapper.readValue(requestDtoJson, MessageDto.SendRequestDto.class);
+
+            log.info("sendMessage: {}", requestDto.getSendMessage());
 
             // 수신 전화번호 목록에 단일 전화번호 추가
             List<String> recipientPhoneNumbers = new ArrayList<>();

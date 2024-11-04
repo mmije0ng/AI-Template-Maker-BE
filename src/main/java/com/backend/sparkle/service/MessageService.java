@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -16,6 +17,8 @@ import java.util.NoSuchElementException;
 public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Autowired
     public MessageService(MessageRepository messageRepository, UserRepository userRepository){
@@ -39,14 +42,15 @@ public class MessageService {
         Message message = messageRepository.findTopByUserIdOrderByCreatedAtDesc(userId);
 
         if (message == null)
-            throw new NoSuchElementException("해당 userId로 최근 메시지를 찾을 수 없습니다. userId: " + userId);
+            throw new NoSuchElementException("최근 메시지를 찾을 수 없습니다. userId: " + userId);
 
-        MessageDto.SendCompleteResponseDto responseDto = MessageDto.SendCompleteResponseDto.builder()
+        String formattedDateTime = message.getCreatedAt().format(DATE_TIME_FORMATTER);
+
+        return MessageDto.SendCompleteResponseDto.builder()
                 .imageURL(message.getMessageImageUrl())
-                .sendDateTime(message.getCreatedAt().toString())
+                .sendMessage(message.getMessageContent())
+                .sendDateTime(formattedDateTime)
                 .sendPhoneNumber(message.getSendPhoneNumber())
                 .build();
-
-        return responseDto;
     }
 }
