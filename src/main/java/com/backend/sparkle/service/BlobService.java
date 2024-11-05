@@ -8,9 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Base64;
 
 @Slf4j
 @Service
@@ -55,6 +57,27 @@ public class BlobService {
             connection.setRequestMethod("GET");
             InputStream inputStream = connection.getInputStream();
             long contentLength = connection.getContentLengthLong();
+
+            // Blob 이름 생성 및 업로드
+            String blobName = "uploaded_image_" + System.currentTimeMillis() + ".png";
+            return uploadBlob(blobName, inputStream, contentLength);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Failed to upload image: " + e.getMessage();
+        }
+    }
+
+
+    // base64로 인코딩된 이미지를 URL로 업로드
+    public String uploadBase64Image(String base64ImageData) {
+        try {
+            // "data:image/png;base64," 부분 제거
+            String base64Data = base64ImageData.split(",")[1];
+
+            // Base64 데이터를 디코딩
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+            InputStream inputStream = new ByteArrayInputStream(decodedBytes);
+            long contentLength = decodedBytes.length;
 
             // Blob 이름 생성 및 업로드
             String blobName = "uploaded_image_" + System.currentTimeMillis() + ".png";
