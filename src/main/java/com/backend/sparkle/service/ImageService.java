@@ -80,12 +80,28 @@ public class ImageService {
 
     // 이미지 생성 요청 메소드
     public MessageDto.ImageGenerateResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
+        // 스타일과 계절 전략을 선택하고 변환
+        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
+        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
+
+        // 변환된 스타일과 계절을 사용하여 Dalle 이미지를 생성
+        String transformedMood= styleStrategy.applyMood();
+        String transformedSeason = seasonStrategy.applySeason();
+
+        // 사용자가 입력한 키워드 + Azure textAnalytics 를 이용하여 추출된 키워드 리스트
+        List<String> inputKeyWords = requestDto.getKeyWordMessage();
+        List<String> keyPhrases = inputKeyWords.stream()
+                .map(keyword -> chatGptService.translateText(keyword, "en"))
+                .collect(Collectors.toList());
+
+        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime startTime = LocalDateTime.now(); // 요청 시작 시간 기록
 
         // 스타일 목록을 비동기 처리하여 이미지 생성 요청
         List<CompletableFuture<String>> futures = styles.parallelStream()
-                .map(style -> retryGenerateImage(style, requestDto))
+                .map(style -> retryGenerateImage(style, keyPhrases, requestDto.getInputMessage(), transformedMood, transformedSeason))
                 .collect(Collectors.toList());
 
         // 모든 비동기 요청의 결과를 모아 리스트로 반환
@@ -106,7 +122,7 @@ public class ImageService {
     }
 
     // 이미지 생성 요청 재시도
-    private CompletableFuture<String> retryGenerateImage(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
+    private CompletableFuture<String> retryGenerateImage(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
         int maxRetries = 5;  // 최대 재시도 횟수
         int retryCount = 0;
 
@@ -114,7 +130,7 @@ public class ImageService {
 
         while (retryCount < maxRetries) {
             try {
-                return generateImageWithDalle(imageStyle, requestDto)
+                return generateImageWithDalle(imageStyle, keyPhrases, inputMessage, mood, season)
                         .thenApply(resultUrl -> {
                             return resultUrl;
                         });
@@ -139,8 +155,8 @@ public class ImageService {
     }
 
     // DALL-E API에 이미지 생성 요청
-    private CompletableFuture<String> generateImageWithDalle(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
-        String prompt = generatePrompt(imageStyle, requestDto); // 생성된 프롬프트
+    private CompletableFuture<String> generateImageWithDalle(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
+        String prompt = generatePrompt(imageStyle, keyPhrases, inputMessage, mood, season); // 생성된 프롬프트
 
         // DALL-E API에 전송할 요청 데이터 준비
         DalleRequestDto dalleRequestDto = DalleRequestDto.builder()
@@ -189,23 +205,7 @@ public class ImageService {
     }
 
     // 이미지 생성에 필요한 프롬프트 생성
-    private String generatePrompt(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
-        // 스타일과 계절 전략을 선택하고 변환
-        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
-        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
-
-        // 변환된 스타일과 계절을 사용하여 Dalle 이미지를 생성
-        String transformedMood= styleStrategy.applyMood();
-        String transformedSeason = seasonStrategy.applySeason();
-
-        // 사용자가 입력한 키워드 + Azure textAnalytics 를 이용하여 추출된 키워드 리스트
-        List<String> inputKeyWords = requestDto.getKeyWordMessage();
-        List<String> keyPhrases = inputKeyWords.stream()
-                .map(keyword -> chatGptService.translateText(keyword, "en"))
-                .collect(Collectors.toList());
-
-        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
-
+    private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage,  String mood, String season) {
 
         return String.format(
                 "Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
@@ -215,10 +215,10 @@ public class ImageService {
                         "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements. " +
                         "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
-                chatGptService.translateText(requestDto.getInputMessage(), "en"),
+                chatGptService.translateText(inputMessage, "en"),
                 String.join(", ", keyPhrases),
-                transformedMood,
-                transformedSeason
+                mood,
+                season
         );
 
     }
