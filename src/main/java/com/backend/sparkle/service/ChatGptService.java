@@ -37,16 +37,9 @@ public class ChatGptService {
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .build();
-        log.info("ChatGpt WebClient 초기화 완료. API URL: {}", apiUrl);
     }
 
-    /**
-     * 번역 메서드: 입력 메시지를 지정한 언어로 번역합니다.
-     *
-     * @param inputMessage 번역할 텍스트
-     * @param targetLanguage 대상 언어 ("en" 또는 "ko")
-     * @return 번역된 텍스트
-     */
+    // 입력 메시지를 영어 또는 한국어로 번역
     public String translateText(String inputMessage, String targetLanguage) {
         // 대상 언어에 따른 프롬프트 설정
         String prompt = targetLanguage.equalsIgnoreCase("en")
@@ -76,7 +69,6 @@ public class ChatGptService {
             if (choicesNode.isArray() && choicesNode.size() > 0) {
                 String content = choicesNode.get(0).path("message").path("content").asText();
                 if (!content.isEmpty()) {
-//                    log.info("번역된 텍스트: " + content);
                     return content;
                 }
             }

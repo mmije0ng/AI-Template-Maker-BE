@@ -2,6 +2,10 @@ package com.backend.sparkle.service;
 
 import com.backend.sparkle.dto.DalleRequestDto;
 import com.backend.sparkle.dto.MessageDto;
+import com.backend.sparkle.strategy.mood.MoodStrategy;
+import com.backend.sparkle.strategy.mood.MoodStrategyFactory;
+import com.backend.sparkle.strategy.season.SeasonStrategy;
+import com.backend.sparkle.strategy.season.SeasonStrategyFactory;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -16,9 +20,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -26,6 +32,7 @@ public class ImageService {
 
     private final WebClient webClient;
     private final BlobService blobService;
+    private final ChatGptService chatGptService;
 
     private final TextAnalyticsService textAnalyticsService;
 
@@ -42,18 +49,26 @@ public class ImageService {
 
     // 이미지 생성에 사용될 다양한 스타일 목록 정의
     private static final List<String> styles = List.of(
-            "파스텔 색감으로 표현된 미니멀리스트 일러스트 스타일, 단순하고 깔끔한 구도와 부드러운 음영 효과가 특징인 이미지",
-            "매우 세밀하고 사실적인 사진 스타일, 현실감 있고 디테일이 살아있는 고해상도 이미지",
-            "밝고 생동감 있는 색감을 사용한 미니멀리스트 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
-            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 이미지"
+            "Minimalist illustration style with pastel tones, featuring a simple and clean composition with soft shading",
+            "Highly detailed and realistic photographic style, a high-resolution image with vivid realism and fine detail",
+            "Animation style with bright and vibrant colors, presenting characters and background in a simplified form",
+            "Modern digital art style, an image highlighted by rich colors and creative design elements in a minimalistic layout"
     );
+
+//    private static final List<String> styles = List.of(
+//            "파스텔 색감으로 표현된 미니멀리스트 일러스트 스타일, 단순하고 깔끔한 구도와 부드러운 음영 효과가 특징인 이미지",
+//            "매우 세밀하고 사실적인 사진 스타일, 현실감 있고 디테일이 살아있는 고해상도 이미지",
+//            "밝고 생동감 있는 색감을 사용한 애니메이션 스타일, 캐릭터와 배경이 간결하게 표현된 이미지",
+//            "현대적인 디지털 아트 스타일, 풍부한 색감과 창의적인 디자인 요소가 돋보이는 간결하게 표현된 이미지"
+//    );
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, TextAnalyticsService textAnalyticsService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService, TextAnalyticsService textAnalyticsService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
-        this.textAnalyticsService=textAnalyticsService;
+        this.chatGptService = chatGptService;
+        this.textAnalyticsService = textAnalyticsService;
     }
 
     // 서비스 초기화 시 DALL-E API URI 설정
@@ -62,14 +77,31 @@ public class ImageService {
         this.dalleURI = String.format("%s?api-version=%s", dalleAzureEndpoint, dalleApiVersion);
     }
 
+
     // 이미지 생성 요청 메소드
     public MessageDto.ImageGenerateResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
+        // 스타일과 계절 전략을 선택하고 변환
+        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
+        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
+
+        // 변환된 스타일과 계절을 사용하여 Dalle 이미지를 생성
+        String transformedMood= styleStrategy.applyMood();
+        String transformedSeason = seasonStrategy.applySeason();
+
+        // 사용자가 입력한 키워드 + Azure textAnalytics 를 이용하여 추출된 키워드 리스트
+        List<String> inputKeyWords = requestDto.getKeyWordMessage();
+        List<String> keyPhrases = inputKeyWords.stream()
+                .map(keyword -> chatGptService.translateText(keyword, "en"))
+                .collect(Collectors.toList());
+
+        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime startTime = LocalDateTime.now(); // 요청 시작 시간 기록
 
         // 스타일 목록을 비동기 처리하여 이미지 생성 요청
         List<CompletableFuture<String>> futures = styles.parallelStream()
-                .map(style -> CompletableFuture.supplyAsync(() -> retryGenerateImage(style, requestDto)))
+                .map(style -> retryGenerateImage(style, keyPhrases, requestDto.getInputMessage(), transformedMood, transformedSeason))
                 .collect(Collectors.toList());
 
         // 모든 비동기 요청의 결과를 모아 리스트로 반환
@@ -86,22 +118,26 @@ public class ImageService {
 
         return MessageDto.ImageGenerateResponseDto.builder()
                 .generatedImageUrls(generatedImageUrls)
-                .keyWord(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage(), requestDto.getKeyWordMessage()))
                 .build();
     }
 
-    // 이미지 생성 요청을 재시도
-    private String retryGenerateImage(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
+    // 이미지 생성 요청 재시도
+    private CompletableFuture<String> retryGenerateImage(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
         int maxRetries = 5;  // 최대 재시도 횟수
         int retryCount = 0;
 
+        CompletableFuture<String> result = new CompletableFuture<>();
+
         while (retryCount < maxRetries) {
             try {
-                return generateImageWithDalle(imageStyle, requestDto); // 이미지 생성 요청 시도
+                return generateImageWithDalle(imageStyle, keyPhrases, inputMessage, mood, season)
+                        .thenApply(resultUrl -> {
+                            return resultUrl;
+                        });
             } catch (WebClientResponseException e) {
-                if (e.getStatusCode().value() == 429) {  // Too Many Requests (429 오류) 발생 시 재시도
+                if (e.getStatusCode().value() == 429 || e.getStatusCode().value() == 400) {  // Too Many Requests (429 오류), 400 발생 시 재시도
                     retryCount++;
-                    log.warn("429 Too Many Requests 발생. {}초 후 재시도 ({}/{})", retryCount * 8, retryCount, maxRetries);
+                    log.warn("{}초 후 재시도 ({}/{})", retryCount * 8, retryCount, maxRetries);
                     try {
                         TimeUnit.SECONDS.sleep(retryCount * 8); // 재시도 간격을 증가시키며 대기
                     } catch (InterruptedException ie) {
@@ -109,16 +145,18 @@ public class ImageService {
                     }
                 } else {
                     log.error("Dalle API 요청 중 오류 발생: {}", e.getMessage());
-                    throw e;
+                    result.completeExceptionally(e); // 예외 처리
+                    return result;
                 }
             }
         }
-        throw new RuntimeException("Dalle API 요청이 여러 번 실패했습니다.");
+        result.completeExceptionally(new RuntimeException("Dalle API 요청이 여러 번 실패했습니다."));
+        return result;
     }
 
     // DALL-E API에 이미지 생성 요청
-    private String generateImageWithDalle(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
-        String prompt = generatePrompt(imageStyle, requestDto); // 생성된 프롬프트
+    private CompletableFuture<String> generateImageWithDalle(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
+        String prompt = generatePrompt(imageStyle, keyPhrases, inputMessage, mood, season); // 생성된 프롬프트
 
         // DALL-E API에 전송할 요청 데이터 준비
         DalleRequestDto dalleRequestDto = DalleRequestDto.builder()
@@ -131,10 +169,9 @@ public class ImageService {
 
         log.info("Dalle 이미지 생성 요청, prompt: {}", prompt);
 
-        String responseBody;
         try {
             // DALL-E API 요청 및 응답 수신
-            responseBody = webClient.post()
+            String responseBody = webClient.post()
                     .uri(dalleURI)
                     .header("api-key", dalleApiKey)
                     .header("Content-Type", "application/json")
@@ -154,8 +191,10 @@ public class ImageService {
             JSONObject dataObject = dataArray.getJSONObject(0);
             String url = dataObject.getString("url");
 
-            // 추출한 URL을 Blob Storage에 업로드하여 새로운 URL 반환
-            return blobService.uploadImageByUrl(url);
+            log.info("Dalle revised_prompt: {}", dataObject.getString("revised_prompt"));
+
+            // 비동기적으로 Blob Storage에 업로드하여 새로운 URL 반환
+            return CompletableFuture.supplyAsync(() -> blobService.uploadImageByUrl(url));
         } catch (JSONException e) {
             log.error("JSON 파싱 중 오류 발생: {}", e.getMessage());
             throw new RuntimeException("JSON 파싱 오류", e);
@@ -166,15 +205,22 @@ public class ImageService {
     }
 
     // 이미지 생성에 필요한 프롬프트 생성
-    private String generatePrompt(String imageStyle, MessageDto.ImageGenerateRequestDto requestDto) {
-        return String.format("%s를 만들어 주세요. 이 이미지는 깨끗하고 간결한 디자인을 강조하며, 필수적인 요소에 집중하여 표현합니다. " +
-                        "텍스트나 문자는 절대로 포함되지 않으며, 어떠한 글자나 글씨도 나타나지 않아야 합니다. 설명: %s. " +
-                        "다음 키워드를 반영하여 시각적으로 표현합니다: %s. 분위기는 %s이며, 이 분위기를 반영하여 이미지를 생성합니다. " +
-                        "계절적 요소로는 %s을(를) 배경 테마로 설정합니다.",
+    private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage,  String mood, String season) {
+
+        return String.format(
+                "Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
+                        "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
+                        "Description: %s. " +
+                        "Visually express the following keywords: %s. Set the mood to %s and reflect this atmosphere in the image. " +
+                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements. " +
+                        "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
-                requestDto.getInputMessage(),
-                String.join(", ", requestDto.getKeyWordMessage()),
-                requestDto.getMood(),
-                requestDto.getSeason());
+                chatGptService.translateText(inputMessage, "en"),
+                String.join(", ", keyPhrases),
+                mood,
+                season
+        );
+
     }
+
 }

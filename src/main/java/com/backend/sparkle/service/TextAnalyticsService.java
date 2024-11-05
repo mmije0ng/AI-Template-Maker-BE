@@ -43,17 +43,14 @@ public class TextAnalyticsService {
     }
 
     // Azure의 textAnalytics를 이용하여 핵심 사용자가 입력한 발송 목적 및 내용에서 키워드를 추출하는 메서드
-    public List<String> extractKeyPhrases(String inputMessage, List<String> keyWordMessage) {
+    public List<String> extractKeyPhrases(String inputMessage) {
         List<String> keyPhrases = new ArrayList<>();
 
-        // 사용자가 직접 입력한 키워드 리스트 추가
-        keyPhrases.addAll(keyWordMessage);
-
-        // Azure 텍스트 분석 API를 사용해 영어 키워드 추출 후, 한국어로 번역하여 리스트에 추가
+        // 사용자가 입력한 발송 목적 및 내용을 영어로 번역 후
+        // Azure 텍스트 분석 API를 사용해 키워드 추출
         textAnalyticsClient.extractKeyPhrases(chatGptService.translateText(inputMessage, "en")).forEach(keyPhrase -> {
-            String translatedKeyPhrase = chatGptService.translateText(keyPhrase, "kr");
-            keyPhrases.add(translatedKeyPhrase); // 번역된 키워드 추가
-            log.info("추출된 키워드 (한국어): {}", translatedKeyPhrase);
+            keyPhrases.add(keyPhrase); // 번역된 키워드 추가
+            log.info("추출된 키워드: {}", keyPhrase);
         });
 
         log.info("키워드 추출 완료");
