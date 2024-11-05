@@ -20,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -32,6 +33,8 @@ public class ImageService {
     private final WebClient webClient;
     private final BlobService blobService;
     private final ChatGptService chatGptService;
+
+    private final TextAnalyticsService textAnalyticsService;
 
     @Value("${azure.dalle.endpoint}")
     private String dalleAzureEndpoint;
@@ -61,10 +64,11 @@ public class ImageService {
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService, TextAnalyticsService textAnalyticsService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
         this.chatGptService = chatGptService;
+        this.textAnalyticsService = textAnalyticsService;
     }
 
     // 서비스 초기화 시 DALL-E API URI 설정
@@ -194,6 +198,15 @@ public class ImageService {
         String transformedMood= styleStrategy.applyMood();
         String transformedSeason = seasonStrategy.applySeason();
 
+        // 사용자가 입력한 키워드 + Azure textAnalytics 를 이용하여 추출된 키워드 리스트
+        List<String> inputKeyWords = requestDto.getKeyWordMessage();
+        List<String> keyPhrases = inputKeyWords.stream()
+                .map(keyword -> chatGptService.translateText(keyword, "en"))
+                .collect(Collectors.toList());
+
+        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
+
+
         return String.format(
                 "Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
                         "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
@@ -203,7 +216,7 @@ public class ImageService {
                         "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
                 chatGptService.translateText(requestDto.getInputMessage(), "en"),
-                chatGptService.translateText(String.join(", ", requestDto.getKeyWordMessage()), "en"),
+                String.join(", ", keyPhrases),
                 transformedMood,
                 transformedSeason
         );
