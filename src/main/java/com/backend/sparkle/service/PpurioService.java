@@ -51,8 +51,16 @@ public class PpurioService {
             try {
                 Map<String, Object> sendResponse = send(PpurioURI, token, sendPhoneNumber, recipient, sendMessage, imageUrl, sendType, sendDateTime);
                 if (sendResponse == null || !sendResponse.containsKey("success") || !(boolean) sendResponse.get("success")) {
-                    allSuccess = false;
-                    log.error("수신자 {}에게 메시지 전송 실패: {}", recipient, sendResponse);
+                    if(sendResponse.get("code").equals("1000")){
+                        allSuccess = true;
+                        log.info("수신자 {}에게 메시지 전송 성공", recipient);
+                    }
+
+                    else {
+                        allSuccess = false;
+                        log.error("수신자 {}에게 메시지 전송 실패: {}", recipient, sendResponse);
+                    }
+
                 } else {
                     log.info("수신자 {}에게 메시지 전송 성공", recipient);
                 }

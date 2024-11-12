@@ -41,10 +41,10 @@ public class MessageHistoryController {
             // 실제 서비스에서는 DB에서 페이징 처리된 문자 내역을 조회해야 함
             // 여기서는 예시로 임의의 데이터 생성
             List<MessageDto.HistoryResponseDto> messageHistoryList = new ArrayList<>();
-            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/48/3d/a7/483da78ca17fa011004bac70b7e7c763.jpg", "2024-10-12", "010-1234-5678", "한성대 주소록"));
-            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/38/73/51/387351a404a2dcf47ada6a138b7a14e7.jpg", "2024-10-11", "010-8765-4321", "수학 학원"));
-            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg", "2024-10-11", "010-1111-2222", "영어 학원"));
-            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/736x/14/02/9b/14029bc5f6735407bfadc065fa482bfe.jpg", "2024-10-10", "010-1111-2222", "성북구 주소록"));
+            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/48/3d/a7/483da78ca17fa011004bac70b7e7c763.jpg", "2024-10-12", "010-1234-5678"));
+            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/38/73/51/387351a404a2dcf47ada6a138b7a14e7.jpg", "2024-10-11", "010-8765-4321"));
+            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/564x/f0/e0/9c/f0e09cba73d689fc2c0ef01bbbbeae1a.jpg", "2024-10-11", "010-1111-2222"));
+            messageHistoryList.add(new MessageDto.HistoryResponseDto("https://i.pinimg.com/736x/14/02/9b/14029bc5f6735407bfadc065fa482bfe.jpg", "2024-10-10", "010-1111-2222"));
 
             // 페이징에 맞는 데이터 서브리스트 추출 (나중에 jpa로 pageSize에 맞는 데이터만 추출할 수 있음)
             int start = Math.min((int) pageable.getOffset(), messageHistoryList.size());
