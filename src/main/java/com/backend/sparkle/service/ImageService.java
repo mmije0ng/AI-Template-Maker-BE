@@ -182,16 +182,18 @@ public class ImageService {
                 JSONObject jsonResponse = new JSONObject(responseBody);
                 JSONArray dataArray = jsonResponse.getJSONArray("data");
                 String url = dataArray.getJSONObject(0).getString("url");
-                log.info("Dalle 생성 이미지 url: {}",url);
+                log.info("Dalle 생성 이미지 url: {}", url);
                 log.info("Dalle revised_prompt: {}", dataArray.getJSONObject(0).getString("revised_prompt"));
 
-                return blobService.uploadImageByUrl(url);
+                // Blob 업로드를 비동기적으로 처리
+                return CompletableFuture.supplyAsync(() -> blobService.uploadImageByUrl(url));
             } catch (JSONException e) {
                 log.error("JSON 파싱 중 오류 발생: {}", e.getMessage());
                 throw new RuntimeException("JSON 파싱 오류", e);
             }
-        });
+        }).thenCompose(blobUploadFuture -> blobUploadFuture);  // 비동기적으로 Blob 업로드 결과 반환
     }
+
 
     // 이미지 생성에 필요한 프롬프트 생성
     private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage,  String mood, String season) {
