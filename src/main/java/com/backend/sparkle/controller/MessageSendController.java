@@ -84,6 +84,7 @@ public class MessageSendController {
             MessageDto.SendRequestDto requestDto = objectMapper.readValue(requestDtoJson, MessageDto.SendRequestDto.class);
 
             log.info("sendMessage: {}", requestDto.getSendMessage());
+            log.info("completeImageURL: {}", requestDto.getCompleteImageURL());
 
             // 수신 전화번호 목록에 단일 전화번호 추가
             List<String> recipientPhoneNumbers = new ArrayList<>();
