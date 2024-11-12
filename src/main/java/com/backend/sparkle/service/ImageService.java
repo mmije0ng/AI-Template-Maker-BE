@@ -32,7 +32,7 @@ public class ImageService {
 
     private final WebClient webClient;
     private final BlobService blobService;
-    private final ChatGptService chatGptService;
+    private final ChatGPTService chatGptService;
 
     private final TextAnalyticsService textAnalyticsService;
 
@@ -51,8 +51,8 @@ public class ImageService {
     private static final List<String> styles = List.of(
             "Minimalist illustration style with pastel tones, featuring a simple and clean composition with soft shading",
             "Highly detailed and realistic photographic style, a high-resolution image with vivid realism and fine detail",
-            "Animation style with bright and vibrant colors, presenting characters and background in a simplified form",
-            "Modern digital art style, an image highlighted by rich colors and creative design elements in a minimalistic layout"
+            "Animation style with bright and vibrant colors, presenting characters and background in a simplified form"
+//            "Modern digital art style, an image highlighted by rich colors and creative design elements in a minimalistic layout"
     );
 
 //    private static final List<String> styles = List.of(
@@ -64,7 +64,7 @@ public class ImageService {
 
     // WebClient와 BlobService를 생성자 주입을 통해 초기화
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService, TextAnalyticsService textAnalyticsService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGPTService chatGptService, TextAnalyticsService textAnalyticsService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
         this.chatGptService = chatGptService;
@@ -123,29 +123,25 @@ public class ImageService {
 
     // 이미지 생성 요청 재시도
     private CompletableFuture<String> retryGenerateImage(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
-        int maxRetries = 5;  // 최대 재시도 횟수
+        int maxRetries = 5;
         int retryCount = 0;
-
         CompletableFuture<String> result = new CompletableFuture<>();
 
         while (retryCount < maxRetries) {
             try {
-                return generateImageWithDalle(imageStyle, keyPhrases, inputMessage, mood, season)
-                        .thenApply(resultUrl -> {
-                            return resultUrl;
-                        });
+                return generateImageWithDalle(imageStyle, keyPhrases, inputMessage, mood, season);
             } catch (WebClientResponseException e) {
-                if (e.getStatusCode().value() == 429 || e.getStatusCode().value() == 400) {  // Too Many Requests (429 오류), 400 발생 시 재시도
+                if (e.getStatusCode().value() == 429 || e.getStatusCode().value() == 400) {
                     retryCount++;
                     log.warn("{}초 후 재시도 ({}/{})", retryCount * 8, retryCount, maxRetries);
                     try {
-                        TimeUnit.SECONDS.sleep(retryCount * 8); // 재시도 간격을 증가시키며 대기
+                        TimeUnit.SECONDS.sleep(retryCount * 8);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
                 } else {
                     log.error("Dalle API 요청 중 오류 발생: {}", e.getMessage());
-                    result.completeExceptionally(e); // 예외 처리
+                    result.completeExceptionally(e);
                     return result;
                 }
             }
@@ -156,52 +152,45 @@ public class ImageService {
 
     // DALL-E API에 이미지 생성 요청
     private CompletableFuture<String> generateImageWithDalle(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
-        String prompt = generatePrompt(imageStyle, keyPhrases, inputMessage, mood, season); // 생성된 프롬프트
+        String prompt = generatePrompt(imageStyle, keyPhrases, inputMessage, mood, season);
 
-        // DALL-E API에 전송할 요청 데이터 준비
         DalleRequestDto dalleRequestDto = DalleRequestDto.builder()
                 .prompt(prompt)
                 .size("1024x1792")
                 .n(1)
-                .quality("hd")
+                .quality("standard")
                 .style("vivid")
                 .build();
 
         log.info("Dalle 이미지 생성 요청, prompt: {}", prompt);
 
-        try {
-            // DALL-E API 요청 및 응답 수신
-            String responseBody = webClient.post()
-                    .uri(dalleURI)
-                    .header("api-key", dalleApiKey)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(dalleRequestDto)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String responseBody = webClient.post()
+                        .uri(dalleURI)
+                        .header("api-key", dalleApiKey)
+                        .header("Content-Type", "application/json")
+                        .bodyValue(dalleRequestDto)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
 
-            // 응답이 null이거나 비어 있으면 예외 발생
-            if (responseBody == null || responseBody.isEmpty()) {
-                throw new RuntimeException("Dalle API로부터 응답이 null이거나 비어 있습니다.");
+                if (responseBody == null || responseBody.isEmpty()) {
+                    throw new RuntimeException("Dalle API로부터 응답이 null이거나 비어 있습니다.");
+                }
+
+                JSONObject jsonResponse = new JSONObject(responseBody);
+                JSONArray dataArray = jsonResponse.getJSONArray("data");
+                String url = dataArray.getJSONObject(0).getString("url");
+                log.info("Dalle 생성 이미지 url: {}",url);
+                log.info("Dalle revised_prompt: {}", dataArray.getJSONObject(0).getString("revised_prompt"));
+
+                return blobService.uploadImageByUrl(url);
+            } catch (JSONException e) {
+                log.error("JSON 파싱 중 오류 발생: {}", e.getMessage());
+                throw new RuntimeException("JSON 파싱 오류", e);
             }
-
-            // JSON 응답 파싱하여 이미지 URL 추출
-            JSONObject jsonResponse = new JSONObject(responseBody);
-            JSONArray dataArray = jsonResponse.getJSONArray("data");
-            JSONObject dataObject = dataArray.getJSONObject(0);
-            String url = dataObject.getString("url");
-
-            log.info("Dalle revised_prompt: {}", dataObject.getString("revised_prompt"));
-
-            // 비동기적으로 Blob Storage에 업로드하여 새로운 URL 반환
-            return CompletableFuture.supplyAsync(() -> blobService.uploadImageByUrl(url));
-        } catch (JSONException e) {
-            log.error("JSON 파싱 중 오류 발생: {}", e.getMessage());
-            throw new RuntimeException("JSON 파싱 오류", e);
-        } catch (WebClientResponseException e) {
-            log.error("Dalle API 요청 중 오류 발생: {}", e.getMessage());
-            throw e;
-        }
+        });
     }
 
     // 이미지 생성에 필요한 프롬프트 생성

@@ -33,7 +33,7 @@ public class BlobController {
     @Operation(summary = "base64로 인코딩된 이미지를 Request Body에서 받아 Blob Storage에 업로드")
     @PostMapping("/uploadImageByUrl/body")
     public ResponseEntity<BlobDto.ResponseDto> uploadImageByUrlByBody(@RequestBody BlobDto.RequetDto requestDto) {
-        log.info("/uploadImageByUrl/body");
+        log.info("blo/uploadImageByUrl/body 실행");
 
         BlobDto.ResponseDto responseDto = new BlobDto.ResponseDto(blobService.uploadBase64Image(requestDto.getBase64Image()));
         log.info("base64 => URL 변환: {}", responseDto.getImageUrl());
