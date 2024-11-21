@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Dictionary;
-import java.util.HashMap;
 import java.util.List;
 
 public class MessageDto {
@@ -36,13 +34,16 @@ public class MessageDto {
     @Builder
     @AllArgsConstructor
     @Schema(description = "이미지 생성 응답 정보")
-    public static class ImageGenerateResponseDto {
+    public static class GeneratedImageMessageResponseDto {
         @Schema(description = "생성된 4장의 이미지 URL 경로 리스트",
                 example = "[\"https://sparcleblob.blob.core.windows.net/test-blob/uploaded_image_1730195858730.png\", " +
                         "\"https://sparcleblob.blob.core.windows.net/test-blob/uploaded_image_1730195859420.png\", " +
                         "\"https://sparcleblob.blob.core.windows.net/test-blob/uploaded_image_1730195859651.png\", " +
                         "\"https://sparcleblob.blob.core.windows.net/test-blob/uploaded_image_1730195858740.png\"]")
         private List<String> generatedImageUrls;
+
+        @Schema(description = "생성된 광고 메시지", example ="")
+        private String advertiseMessage;
     }
 
     @Getter

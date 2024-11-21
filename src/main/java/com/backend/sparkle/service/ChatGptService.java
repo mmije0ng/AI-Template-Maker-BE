@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class ChatGPTService {
+public class ChatGptService {
 
     @Value("${openai.api.url}")
     private String apiUrl;
@@ -33,7 +33,7 @@ public class ChatGPTService {
     private final ObjectMapper objectMapper;
     private OpenAiService openAiService;
 
-    public ChatGPTService(ObjectMapper objectMapper) {
+    public ChatGptService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -81,6 +81,7 @@ public class ChatGPTService {
 
             if (choicesNode.isArray() && choicesNode.size() > 0) {
                 String content = choicesNode.get(0).path("message").path("content").asText();
+                log.error(content);
                 if (!content.isEmpty()) {
                     return content;
                 }
@@ -91,8 +92,43 @@ public class ChatGPTService {
         throw new RuntimeException("번역 실패: " + targetLanguage + "로 변환할 수 없습니다.");
     }
 
-    // DALL-E API를 사용해 이미지를 생성하고 URL 반환
+    // 광고 메시지 생성
+    public String generateMessage(String inputMessage) {
+        String prompt = "아래의 내용을 바탕으로 광고 메시지를 생성해줘.";
 
+        ChatGptDto.ChatRequestDto chatRequestDto = new ChatGptDto.ChatRequestDto(
+                "gpt-4",
+                4000,
+                0.0,
+                List.of(
+                        new ChatGptDto.ChatRequestDto.Message("user", prompt),
+                        new ChatGptDto.ChatRequestDto.Message("user", inputMessage)
+                )
+        );
+
+        String responseBody = webClient.post()
+                .bodyValue(chatRequestDto)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode choicesNode = root.path("choices");
+
+            if (choicesNode.isArray() && choicesNode.size() > 0) {
+                String content = choicesNode.get(0).path("message").path("content").asText();
+                if (!content.isEmpty()) {
+                    return content;
+                }
+            }
+        } catch (Exception e) {
+            log.error("JSON 파싱 중 오류 발생: ", e);
+        }
+        throw new RuntimeException("메시지 생성 실패");
+    }
+
+    // DALL-E API를 사용해 이미지를 생성하고 URL 반환
     public String generateImageWithDalle(String prompt, String size) {
         try {
             // 이미지 생성 요청을 생성

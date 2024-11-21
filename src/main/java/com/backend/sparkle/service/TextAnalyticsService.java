@@ -17,7 +17,7 @@ public class TextAnalyticsService {
 
     private TextAnalyticsClient textAnalyticsClient; // 텍스트 분석 클라이언트
 
-    private ChatGPTService chatGPTService; // 한글 => 영어 번역을 위한 chat gpt 서비스
+    private ChatGptService chatGPTService; // 한글 => 영어 번역을 위한 chat gpt 서비스
 
     @Value("${azure.cognitiveservice.endpoint}")
     private String cognitiveAzureEndpoint;
@@ -25,7 +25,7 @@ public class TextAnalyticsService {
     @Value("${azure.cognitiveservice.key}")
     private String cognitiveApiKey;
 
-    public TextAnalyticsService(ChatGPTService chatGPTService){
+    public TextAnalyticsService(ChatGptService chatGPTService){
         this.chatGPTService = chatGPTService;
     }
 
@@ -53,6 +53,8 @@ public class TextAnalyticsService {
         });
 
         log.info("키워드 추출 완료");
+
+//        log.info(chatGPTService.generateMessage(inputMessage));
 
         return keyPhrases;
     }
