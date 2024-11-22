@@ -8,11 +8,13 @@ import com.backend.sparkle.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.NoSuchElementException;
 
 @Slf4j
+@Transactional(readOnly = true)
 @Service
 public class MessageService {
     private final MessageRepository messageRepository;
@@ -27,6 +29,7 @@ public class MessageService {
     }
     
     // 사용자가 전송한 메시지 내역 저장
+    @Transactional
     public void addMessage(Long userId, MessageDto.SendRequestDto requestDto){
         // User 객체 조회
         User user = userRepository.findById(userId)

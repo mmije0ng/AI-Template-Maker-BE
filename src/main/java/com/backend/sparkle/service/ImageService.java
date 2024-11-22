@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -28,10 +27,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ImageService {
-
     private final WebClient webClient;
     private final BlobService blobService;
-    private final ChatGPTService chatGptService;
+    private final ChatGptService chatGptService;
     private final TextAnalyticsService textAnalyticsService;
 
     @Value("${azure.dalle.endpoint}")
@@ -45,7 +43,7 @@ public class ImageService {
 
     private String dalleURI;
 
-    // 이미지 생성에 사용될 다양한 스타일 목록 정의
+    // 이미지 생성에 사용될 다양한 스타일 목록 정의 - 일러스트, 사실적, 애니메이션
     private static final List<String> styles = List.of(
             "Minimalist illustration style with pastel tones, featuring a simple and clean composition with soft shading",
             "Highly detailed and realistic photographic style, a high-resolution image with vivid realism and fine detail",
@@ -53,7 +51,7 @@ public class ImageService {
     );
 
     @Autowired
-    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGPTService chatGptService, TextAnalyticsService textAnalyticsService) {
+    public ImageService(WebClient.Builder webClientBuilder, BlobService blobService, ChatGptService chatGptService, TextAnalyticsService textAnalyticsService) {
         this.webClient = webClientBuilder.build();
         this.blobService = blobService;
         this.chatGptService = chatGptService;
@@ -66,22 +64,30 @@ public class ImageService {
     }
 
     // 이미지 생성 요청 메소드
-    public MessageDto.ImageGenerateResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
+    public MessageDto.GeneratedImageMessageResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
+        // 분위기, 계졀 키워드 영어로 변환
         MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
         SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
 
         String transformedMood = styleStrategy.applyMood();
         String transformedSeason = seasonStrategy.applySeason();
+        
+        // 광고 메시지 생성
+        String advertiseMessage = chatGptService.generateMessage(requestDto.getInputMessage());
+        log.info("생성된 광고 메시지: {}", advertiseMessage);
 
+        // 발송 목적 및 내용 영어로 변환
         List<String> keyPhrases = requestDto.getKeyWordMessage().stream()
                 .map(keyword -> chatGptService.translateText(keyword, "en"))
                 .collect(Collectors.toList());
 
+        // Azure Text Analytics를 이용하여 키워드 추출
         keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime startTime = LocalDateTime.now();
 
+        // Dalle 이미지 생성 비동기로 요청
         List<CompletableFuture<String>> imageFutures = styles.parallelStream()
                 .map(style -> retryGenerateImage(style, keyPhrases, requestDto.getInputMessage(), transformedMood, transformedSeason))
                 .collect(Collectors.toList());
@@ -98,8 +104,9 @@ public class ImageService {
             Duration duration = Duration.between(startTime, endTime);
             log.info("Dalle 이미지 생성 소요 시간: {} 초", duration.getSeconds());
 
-            return MessageDto.ImageGenerateResponseDto.builder()
+            return MessageDto.GeneratedImageMessageResponseDto.builder()
                     .generatedImageUrls(generatedImageUrls)
+                    .advertiseMessage(advertiseMessage)
                     .build();
         }).join();
     }
@@ -169,13 +176,14 @@ public class ImageService {
         });
     }
 
+    // Dalle 요청 프롬프트 생성
     private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
         return String.format(
                 "Please create an image in a %s style. The image should emphasize a clean and minimalist design and layout. " +
                         "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
                         "Description: %s. " +
                         "Visually express the following keywords: %s. Set the mood to %s and reflect this atmosphere in the image. " +
-                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements. " +
+                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Ensure that the background does not include any text, letters, or characters, and excludes complex background elements. " +
                         "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
                 chatGptService.translateText(inputMessage, "en"),
@@ -183,5 +191,19 @@ public class ImageService {
                 mood,
                 season
         );
+
+//    private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
+//        return String.format(
+//                "Create a clean and minimalist image in a %s style. The design should avoid any text, letters, or human figures. " +
+//                        "Description: %s. " +
+//                        "Focus on visually expressing these keywords: %s. Set the mood to %s to reflect this atmosphere in the image. " +
+//                        "Use a simple, solid-colored background inspired by a %s seasonal theme, without including text or complex elements. " +
+//                        "Only include the objects and keywords described.",
+//                imageStyle,
+//                chatGptService.translateText(inputMessage, "en"),
+//                String.join(", ", keyPhrases),
+//                mood,
+//                season
+//        );
     }
 }
