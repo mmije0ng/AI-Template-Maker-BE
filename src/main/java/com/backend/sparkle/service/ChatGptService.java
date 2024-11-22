@@ -81,7 +81,7 @@ public class ChatGptService {
 
             if (choicesNode.isArray() && choicesNode.size() > 0) {
                 String content = choicesNode.get(0).path("message").path("content").asText();
-                log.error(content);
+                log.info(content);
                 if (!content.isEmpty()) {
                     return content;
                 }

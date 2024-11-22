@@ -183,7 +183,7 @@ public class ImageService {
                         "Text and human figures must not be included, and absolutely no letters or characters should appear in the image. " +
                         "Description: %s. " +
                         "Visually express the following keywords: %s. Set the mood to %s and reflect this atmosphere in the image. " +
-                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Exclude any complex background elements. " +
+                        "The background should be based on a %s seasonal theme, kept simple in a solid color. Ensure that the background does not include any text, letters, or characters, and excludes complex background elements. " +
                         "The background should not contain any elements other than the objects described and the keywords.",
                 imageStyle,
                 chatGptService.translateText(inputMessage, "en"),
@@ -191,5 +191,19 @@ public class ImageService {
                 mood,
                 season
         );
+
+//    private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
+//        return String.format(
+//                "Create a clean and minimalist image in a %s style. The design should avoid any text, letters, or human figures. " +
+//                        "Description: %s. " +
+//                        "Focus on visually expressing these keywords: %s. Set the mood to %s to reflect this atmosphere in the image. " +
+//                        "Use a simple, solid-colored background inspired by a %s seasonal theme, without including text or complex elements. " +
+//                        "Only include the objects and keywords described.",
+//                imageStyle,
+//                chatGptService.translateText(inputMessage, "en"),
+//                String.join(", ", keyPhrases),
+//                mood,
+//                season
+//        );
     }
 }
