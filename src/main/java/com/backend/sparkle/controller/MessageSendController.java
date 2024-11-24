@@ -44,21 +44,21 @@ public class MessageSendController {
     }
 
     @Operation(
-            summary = "발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 생성",
-            description = "사용자가 발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 생성하기 버튼을 클릭하여 4개의 이미지를 생성",
+            summary = "발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 및 광고 문자 생성",
+            description = "사용자가 발송 목적 및 내용, 키워드 선택(분위기, 계절감), 키워드 입력 후 이미지 생성하기 버튼을 클릭하여 3개의 이미지와 광고 문자 생성",
             parameters = {
                     @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
             }
     )
     @PostMapping("/generate/{userId}")
-    public ResponseEntity<CommonResponse<MessageDto.ImageGenerateResponseDto>> createImages(@PathVariable Long userId, @RequestBody MessageDto.ImageGenerateRequestDto requestDto) {
+    public ResponseEntity<CommonResponse<MessageDto.GeneratedImageMessageResponseDto>> createImages(@PathVariable("userId") Long userId, @RequestBody MessageDto.ImageGenerateRequestDto requestDto) {
         log.info("이미지 생성 요청 userId: {}", userId);
         try {
-            MessageDto.ImageGenerateResponseDto responseDto = imageService.generateImages(requestDto);
+            MessageDto.GeneratedImageMessageResponseDto responseDto = imageService.generateImages(requestDto);
             return ResponseEntity.ok(CommonResponse.success("이미지 생성 성공", responseDto));
         } catch (WebClientResponseException e) {
             log.error("Azure Dalle 이미지 생성 요청 오류: {}", e.getMessage());
-            return ResponseEntity.status(e.getStatusCode()).body(CommonResponse.fail("Azure Dalle 이미지 생성 요청 오류"));
+            return ResponseEntity.status(e.getStatusCode()).body(CommonResponse.fail(e.getMessage()));
         }  catch (Exception e) {
             log.error("이미지 생성 실패: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.fail(e.getMessage()));
@@ -74,7 +74,7 @@ public class MessageSendController {
     )
     @PostMapping(value = "/send/{userId}", consumes = {"multipart/form-data"})
     public ResponseEntity<CommonResponse<Long>> sendUnifiedMessage(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @RequestPart("file") MultipartFile file,
             @RequestPart("requestDto") String requestDtoJson) {
 
@@ -138,7 +138,6 @@ public class MessageSendController {
         return phoneNumbers;
     }
 
-
     // 문자 발송 완료 후 화면
     @Operation(
             summary = "문자 보내기 완료 후",
@@ -148,7 +147,7 @@ public class MessageSendController {
             }
     )
     @GetMapping("/complete/{userId}")
-    public ResponseEntity< CommonResponse<MessageDto.SendCompleteResponseDto> > getSendCompleteResponse (@PathVariable Long userId){
+    public ResponseEntity< CommonResponse<MessageDto.SendCompleteResponseDto> > getSendCompleteResponse (@PathVariable("userId") Long userId){
         try {
             return ResponseEntity.ok(CommonResponse.success("문자 보내기 완료 후 요청 성공", messageService.getSendCompleteMessage(userId)));
         } catch (NoSuchElementException e){
@@ -157,7 +156,6 @@ public class MessageSendController {
                     .body(CommonResponse.fail("문자 보내기 완료 후 요청 실패"));
         }
     }
-
 
     // 테스트 발송 메서드 추가
     @Operation(
@@ -168,7 +166,7 @@ public class MessageSendController {
             }
     )
     @PostMapping("/test/{userId}")
-    public ResponseEntity<CommonResponse<Long>> sendTestMessage(@PathVariable Long userId, @RequestBody MessageDto.SendRequestDto requestDto) {
+    public ResponseEntity<CommonResponse<Long>> sendTestMessage(@PathVariable("userId") Long userId, @RequestBody MessageDto.SendRequestDto requestDto) {
         try {
             log.info("테스트 문자 발송 요청 userId: {}", userId);
 
