@@ -192,6 +192,7 @@ public class ImageService {
                 season
         );
 
+
 //    private String generatePrompt(String imageStyle, List<String> keyPhrases, String inputMessage, String mood, String season) {
 //        return String.format(
 //                "Create a clean and minimalist image in a %s style. The design should avoid any text, letters, or human figures. " +
@@ -205,5 +206,14 @@ public class ImageService {
 //                mood,
 //                season
 //        );
+    }
+    public String generateAdvertiseMessage(String inputMessage) {
+        log.info("광고 메시지 생성 요청: {}", inputMessage);
+        try {
+            return chatGptService.generateMessage(inputMessage); // ChatGPT 서비스로 광고 메시지 생성
+        } catch (Exception e) {
+            log.error("광고 메시지 생성 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("광고 메시지 생성 실패", e);
+        }
     }
 }

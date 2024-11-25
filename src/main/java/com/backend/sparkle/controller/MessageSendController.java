@@ -66,6 +66,29 @@ public class MessageSendController {
     }
 
     @Operation(
+            summary = "광고 메시지 생성",
+            description = "발송 목적 및 내용을 기반으로 광고 메시지 생성",
+            parameters = {
+                    @Parameter(name = "userId", description = "사용자 PK", required = true, example = "1")
+            }
+    )
+    @PostMapping("/generateMessage/{userId}")
+    public ResponseEntity<CommonResponse<String>> generateAdvertiseMessage(
+            @PathVariable("userId") Long userId,
+            @RequestBody MessageDto.ImageGenerateRequestDto requestDto) {
+        log.info("광고 메시지 생성 요청 userId: {}", userId);
+        try {
+            // 광고 메시지 생성
+            String advertiseMessage = imageService.generateAdvertiseMessage(requestDto.getInputMessage());
+            return ResponseEntity.ok(CommonResponse.success("광고 메시지 생성 성공", advertiseMessage));
+        } catch (Exception e) {
+            log.error("광고 메시지 생성 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(CommonResponse.fail("광고 메시지 생성 실패"));
+        }
+    }
+
+    @Operation(
             summary = "단일 전화번호와 주소록 엑셀 파일을 통해 문자 전송",
             description = "단일 전화번호와 업로드된 주소록에 있는 모든 전화번호로 문자 메시지를 전송합니다.",
             parameters = {
