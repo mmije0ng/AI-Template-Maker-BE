@@ -65,50 +65,86 @@ public class ImageService {
 
     // 이미지 생성 요청 메소드
     public MessageDto.GeneratedImageMessageResponseDto generateImages(MessageDto.ImageGenerateRequestDto requestDto) {
-        // 분위기, 계졀 키워드 영어로 변환
-        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(requestDto.getMood());
-        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(requestDto.getSeason());
+        // Step 1: 분위기 및 계절 키워드 영어로 변환
+        String transformedMood = transformMood(requestDto.getMood());
+        String transformedSeason = transformSeason(requestDto.getSeason());
 
-        String transformedMood = styleStrategy.applyMood();
-        String transformedSeason = seasonStrategy.applySeason();
-        
-        // 광고 메시지 생성
-        String advertiseMessage = chatGptService.generateMessage(requestDto.getInputMessage());
-        log.info("생성된 광고 메시지: {}", advertiseMessage);
+        // Step 2: 광고 메시지 생성 비동기로 처리
+        CompletableFuture<String> advertiseMessageFuture = generateAdvertiseMessageAsync(requestDto.getInputMessage());
 
-        // 발송 목적 및 내용 영어로 변환
-        List<String> keyPhrases = requestDto.getKeyWordMessage().stream()
-                .map(keyword -> chatGptService.translateText(keyword, "en"))
-                .collect(Collectors.toList());
+        // Step 3: 키워드 추출 (Azure Text Analytics와 ChatGPT 번역 사용)
+        List<String> keyPhrases = extractAndTranslateKeywords(requestDto);
 
-        // Azure Text Analytics를 이용하여 키워드 추출
-        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
-
+        // Step 4: 이미지 생성 비동기로 요청
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime startTime = LocalDateTime.now();
+        List<CompletableFuture<String>> imageFutures = generateImagesAsync(requestDto, keyPhrases, transformedMood, transformedSeason);
 
-        // Dalle 이미지 생성 비동기로 요청
-        List<CompletableFuture<String>> imageFutures = styles.parallelStream()
-                .map(style -> retryGenerateImage(style, keyPhrases, requestDto.getInputMessage(), transformedMood, transformedSeason))
-                .collect(Collectors.toList());
-
+        // Step 5: 모든 비동기 작업 완료 후 결과 결합
         CompletableFuture<Void> allOf = CompletableFuture.allOf(imageFutures.toArray(new CompletableFuture[0]));
 
-        return allOf.thenApply(v -> {
+        return allOf.thenCombine(advertiseMessageFuture, (v, advertiseMessage) -> {
             List<String> generatedImageUrls = imageFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            LocalDateTime endTime = LocalDateTime.now();
-            log.info("Dalle 이미지 생성 요청 완료 시간: {}", endTime.format(formatter));
-            Duration duration = Duration.between(startTime, endTime);
-            log.info("Dalle 이미지 생성 소요 시간: {} 초", duration.getSeconds());
+            logProcessingTime(startTime, formatter);
 
             return MessageDto.GeneratedImageMessageResponseDto.builder()
                     .generatedImageUrls(generatedImageUrls)
                     .advertiseMessage(advertiseMessage)
                     .build();
         }).join();
+    }
+
+    // 분위기 키워드 영어로 번역
+    private String transformMood(String mood) {
+        MoodStrategy styleStrategy = MoodStrategyFactory.getMoodStrategy(mood);
+        return styleStrategy.applyMood();
+    }
+
+    // 계절 키워드 영어로 번역
+    private String transformSeason(String season) {
+        SeasonStrategy seasonStrategy = SeasonStrategyFactory.getSeasonStrategy(season);
+        return seasonStrategy.applySeason();
+    }
+
+    // 비동기로 OpenAI를 이용하여 광고 메시지 생성
+    private CompletableFuture<String> generateAdvertiseMessageAsync(String inputMessage) {
+        return CompletableFuture.supplyAsync(() -> {
+            String message = chatGptService.generateMessage(inputMessage);
+            log.info("생성된 광고 메시지: {}", message);
+            return message;
+        });
+    }
+
+    // 발송 목적 및 내용을 영어로 번역하여 Azure Text Analytics를 이용해 키워드 추출
+    private List<String> extractAndTranslateKeywords(MessageDto.ImageGenerateRequestDto requestDto) {
+        List<String> keyPhrases = requestDto.getKeyWordMessage().stream()
+                .map(keyword -> chatGptService.translateText(keyword, "en"))
+                .collect(Collectors.toList());
+        keyPhrases.addAll(textAnalyticsService.extractKeyPhrases(requestDto.getInputMessage()));
+        return keyPhrases;
+    }
+
+    // 스타일별로 이미지 Dalle 이미지 생성 비동기로 수행
+    private List<CompletableFuture<String>> generateImagesAsync(
+            MessageDto.ImageGenerateRequestDto requestDto,
+            List<String> keyPhrases,
+            String transformedMood,
+            String transformedSeason
+    ) {
+        return styles.parallelStream()
+                .map(style -> retryGenerateImage(style, keyPhrases, requestDto.getInputMessage(), transformedMood, transformedSeason))
+                .collect(Collectors.toList());
+    }
+
+    // 이미지 생성 소요 시간 출력
+    private void logProcessingTime(LocalDateTime startTime, DateTimeFormatter formatter) {
+        LocalDateTime endTime = LocalDateTime.now();
+        log.info("Dalle 이미지 생성 요청 완료 시간: {}", endTime.format(formatter));
+        Duration duration = Duration.between(startTime, endTime);
+        log.info("Dalle 이미지 생성 소요 시간: {} 초", duration.getSeconds());
     }
 
     // 이미지 생성 요청 재시도
