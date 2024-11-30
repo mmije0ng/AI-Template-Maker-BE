@@ -94,7 +94,7 @@ public class ChatGptService {
 
     // 광고 메시지 생성
     public String generateMessage(String inputMessage) {
-        String prompt = "아래의 내용을 바탕으로 광고 메시지를 생성해줘.";
+        String prompt = "아래 내용을 바탕으로 광고 메시지를 생성하세요. 광고 메시지에는 레이아웃이나 색상에 관한 언급은 포함하지 마세요.";
 
         ChatGptDto.ChatRequestDto chatRequestDto = new ChatGptDto.ChatRequestDto(
                 "gpt-4",
