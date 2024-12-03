@@ -11,13 +11,13 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
 생성형 AI와 템플릿 기능을 결합하여 소상공인과 소기업(음식점, 카페, 여행사, 소규모 쇼핑몰 등)이 광고 이미지를 손쉽게 제작하고 꾸밀 수 있는 솔루션을 제공합니다.  
 사용자는 생성형 AI를 통해 원하는 광고 이미지를 제작한 후 템플릿 기능을 활용해 로고, QR 코드, 텍스트, 추가 이미지를 삽입하여 세련되고 일관성 있는 광고 이미지를 완성할 수 있습니다.  
 뿌리오 API와 연동해 생성된 이미지를 원하는 발신자에게 간편하게 문자로 전송할 수 있도록 지원합니다.  
-| ![dalle](https://github.com/user-attachments/assets/936bc5b1-60d7-44ab-9087-b539c0b47dc0) | ![로고,QR](https://github.com/user-attachments/assets/01b5f623-bd91-4033-a210-df14e0efabf5) |
+| ![dalle](https://github.com/user-attachments/assets/72df9d38-23f5-4a6f-8059-ffd5b91f588e) | ![로고,QR](https://github.com/user-attachments/assets/0c761837-d5aa-43d9-88e7-55233a43c2b1) |
 |------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| ![텍스트](https://github.com/user-attachments/assets/d717adfd-b375-4c2b-8a6a-c497cca333ae) | ![이미지](https://github.com/user-attachments/assets/030be4b0-5f3e-4849-afbf-fe72f129fd39) |
+| ![텍스트](https://github.com/user-attachments/assets/377bdc1c-78f1-48d8-8799-2c717a95e3ea) | ![이미지](https://github.com/user-attachments/assets/41ab9d38-2595-48d8-82c1-8a66986a5ce2) |
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/3a21855d-7e8c-478d-b7c2-8712e2749aca" alt="템플릿완성1" width="424" height="600"></td>
-    <td><img src="https://github.com/user-attachments/assets/dd71b27d-351e-48f4-9b89-77c4a6d3caaf" alt="템플릿완성2" width="424" height="600"></td>
+    <td><img src="https://github.com/user-attachments/assets/ad8aefb6-a317-47f2-a7a9-25cefaa797fa" alt="템플릿완성1" width="424" height="600"></td>
+    <td><img src="https://github.com/user-attachments/assets/6d4648b9-2007-439f-9521-aaabbd8de9e2" alt="템플릿완성2" width="424" height="600"></td>
   </tr>
 </table>
 
@@ -31,8 +31,7 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
   - **애니메이션 스타일**
   - **사실적인 포토 스타일**
   - **일러스트 스타일**
-<img width="544" alt="image" src="https://github.com/user-attachments/assets/4c7b4aef-21ba-4088-a04c-7ce2199d7c4a">
-
+    <img width="541" alt="image" src="https://github.com/user-attachments/assets/2e3ae216-9f15-4861-8a8a-42a8bf0307d2">
 
 ### 2. 템플릿 기능
 - **로고 삽입**
@@ -81,7 +80,7 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
 
 &nbsp;
 ## 시스템 구조
-![프캡 구조도](https://github.com/user-attachments/assets/922c329b-1fe0-4a90-93ea-3b1729c901b4)
+![프캡 구조도](https://github.com/user-attachments/assets/5e154cc4-0c72-418e-b9d6-4c9a2ef75721)
 
 &nbsp;
 ## 백엔드 구성 및 역할 분담
