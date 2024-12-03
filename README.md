@@ -31,7 +31,7 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
   - **애니메이션 스타일**
   - **사실적인 포토 스타일**
   - **일러스트 스타일**
-    <img width="544" alt="image" src="https://github.com/user-attachments/assets/4c7b4aef-21ba-4088-a04c-7ce2199d7c4a">
+<img width="544" alt="image" src="https://github.com/user-attachments/assets/4c7b4aef-21ba-4088-a04c-7ce2199d7c4a">
 
 
 ### 2. 템플릿 기능
