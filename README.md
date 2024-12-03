@@ -16,8 +16,8 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
 | ![텍스트](https://github.com/user-attachments/assets/377bdc1c-78f1-48d8-8799-2c717a95e3ea) | ![이미지](https://github.com/user-attachments/assets/41ab9d38-2595-48d8-82c1-8a66986a5ce2) |
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/ad8aefb6-a317-47f2-a7a9-25cefaa797fa" alt="템플릿완성1" width="424" height="600"></td>
-    <td><img src="https://github.com/user-attachments/assets/6d4648b9-2007-439f-9521-aaabbd8de9e2" alt="템플릿완성2" width="424" height="600"></td>
+    <td><img src="https://github.com/user-attachments/assets/ad8aefb6-a317-47f2-a7a9-25cefaa797fa" alt="템플릿완성1" width="430" height="580"></td>
+    <td><img src="https://github.com/user-attachments/assets/6d4648b9-2007-439f-9521-aaabbd8de9e2" alt="템플릿완성2" width="430" height="580"></td>
   </tr>
 </table>
 
