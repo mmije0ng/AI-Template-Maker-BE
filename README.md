@@ -3,8 +3,46 @@
 
 &nbsp;
 ## 프로젝트 실행 방법
-SWPC 2024, 4팀: 스파클 노션에 기록  
-https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
+1. **`application.yml` 파일 다운로드**  
+   아래 링크에서 `application.yml` 파일을 다운로드합니다.
+   https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
+   해당 링크에는 IntelliJ에서 실행하는 방법도 추가되어 있으니, 아래의 방법으로 실행되지 않을 경우 참고해주시면 감사하겠습니다.
+
+3. **Git Repository 클론**  
+   프로젝트를 로컬 환경에 복사합니다:
+   ```bash
+   git clone https://github.com/HSU-SPARKLE/Pre-Capstone-BE.git
+   cd Pre-Capstone-BE
+   
+4. **application.yml 파일 추가**  
+   다운로드한 `application.yml` 파일을 아래 경로에 추가합니다:
+   ```
+   src/main/resources/application.yml
+   ```
+
+5. **Gradle Build 실행**  
+   프로젝트 루트 디렉토리(Pre-Capstone-B)에서 아래 명령어를 실행하여 프로젝트를 빌드합니다:
+   ```bash
+   ./gradlew build
+   ```
+
+6. **빌드된 JAR 파일로 이동**  
+   빌드된 파일이 있는 디렉토리로 이동합니다:
+   ```bash
+   cd build/libs
+   ```
+
+7. **애플리케이션 실행**  
+   아래 명령어를 통해 애플리케이션을 실행합니다:
+   ```bash
+   java -jar sparkle-0.0.1-SNAPSHOT.jar
+   ```
+
+8. **애플리케이션 동작 확인**  
+   http://localhost:8080/test 를 실행해 애플리케이션이 실행되는지 확인한 후,  
+   http://localhost:8080/swagger-ui/index.html#/ 를 실행해 swagger에 접속되는지 확인합니다.
+
+   
 
 &nbsp;
 ## 개요
