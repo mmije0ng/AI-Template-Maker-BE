@@ -91,3 +91,8 @@ https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
 | 조현성     | DB 및 Azure Blob Storage 연동, 백엔드-프론트엔드 연결                 |
 | 홍승기     | 뿌리오 API 연결, 문자 발송 기능 구현                                  |
 
+&nbsp;
+## 기타
+와이어 프레임
+- https://www.figma.com/design/m3lABpF8fay84QkItHprxC/sw-%ED%94%84%EB%A6%AC%EC%BA%A1%EC%8A%A4%ED%86%A4-%EC%8A%A4%ED%8C%8C%ED%81%B4?node-id=0-1&node-type=canvas&t=aIsBrYSNvOMP297e-0
+
