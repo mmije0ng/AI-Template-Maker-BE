@@ -4,8 +4,8 @@
 &nbsp;
 ## 프로젝트 실행 방법
 1. **`application.yml` 파일 다운로드**  
-   아래 링크에서 `application.yml` 파일을 다운로드합니다.
-   https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94
+   아래 링크에서 `application.yml` 파일을 다운로드합니다.  
+   https://www.notion.so/swagger-12ecfec7eed1800d9ab4e7b8c577dd94  
    해당 링크에는 IntelliJ에서 실행하는 방법도 추가되어 있으니, 아래의 방법으로 실행되지 않을 경우 참고해주시면 감사하겠습니다.
 
 3. **Git Repository 클론**  
