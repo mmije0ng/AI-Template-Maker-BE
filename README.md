@@ -15,30 +15,31 @@
    cd Pre-Capstone-BE
    
 4. **application.yml 파일 추가**  
-   다운로드한 `application.yml` 파일을 아래 경로에 추가합니다:
+   다운로드한 `application.yml` 파일을 아래 경로에 추가합니다  
+   src/main/resources 폴더가 없다면 src/main 밑에 resources 폴더를 생성한 후 application.yml 파일을 추가합니다.  
    ```
    src/main/resources/application.yml
    ```
 
-5. **Gradle Build 실행**  
+6. **Gradle Build 실행**  
    프로젝트 루트 디렉토리(Pre-Capstone-B)에서 아래 명령어를 실행하여 프로젝트를 빌드합니다:
    ```bash
    ./gradlew build
    ```
 
-6. **빌드된 JAR 파일로 이동**  
+7. **빌드된 JAR 파일로 이동**  
    빌드된 파일이 있는 디렉토리로 이동합니다:
    ```bash
    cd build/libs
    ```
 
-7. **애플리케이션 실행**  
+8. **애플리케이션 실행**  
    아래 명령어를 통해 애플리케이션을 실행합니다:
    ```bash
    java -jar sparkle-0.0.1-SNAPSHOT.jar
    ```
 
-8. **애플리케이션 동작 확인**  
+9. **애플리케이션 동작 확인**  
    http://localhost:8080/test 를 실행해 애플리케이션이 실행되는지 확인한 후,  
    http://localhost:8080/swagger-ui/index.html#/ 를 실행해 swagger에 접속되는지 확인합니다.
 
@@ -119,6 +120,16 @@
 &nbsp;
 ## 시스템 구조
 ![프캡 구조도](https://github.com/user-attachments/assets/5e154cc4-0c72-418e-b9d6-4c9a2ef75721)
+
+&nbsp;
+## ERD
+<img width="1003" alt="image" src="https://github.com/user-attachments/assets/46b408f3-b295-492b-9a13-cb81bf322216">
+
+&nbsp;
+## DALLE-3 이미지 생성 흐름도 
+![프캡 이미지 생성 흐름](https://github.com/user-attachments/assets/11d8e3a5-6cb7-44f4-adf1-2b36fbac9d9d)
+
+
 
 &nbsp;
 ## 백엔드 구성 및 역할 분담
