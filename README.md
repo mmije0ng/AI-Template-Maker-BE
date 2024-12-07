@@ -44,7 +44,36 @@
    http://localhost:8080/test 를 실행해 애플리케이션이 실행되는지 확인한 후,  
    http://localhost:8080/swagger-ui/index.html#/ 를 실행해 swagger에 접속되는지 확인합니다.
 
+
+
+&nbsp;
+## 프로젝트 실행 방법_프론트엔드
+1. **Git Repository 클론**  
+   프로젝트를 로컬 환경에 복사합니다:
+   ```bash
+   git clone https://github.com/HSU-SPARKLE/Pre-Capstone-FE.git
+   cd Pre-Capstone-FE
+   ```
+
+3. **Node.js 및 npm 설치**  
+   이 프로젝트는 Node.js와 npm을 사용합니다. Node.js가 설치되어 있지 않다면, Node.js공식 웹사이트(https://nodejs.org/en) 에서 설치합니다.
+
+4. **의존성 설치**  
+   프로젝트 디렉토리에서 다음 명령어를 실행하여 필요한 패키지를 설치합니다.
+   ```bash
+   npm install
+   ```
+
+5. **프로젝트 실행**  
+   의존성 설치가 완료되면, 다음 명령어로 프로젝트를 실행합니다.
+   ```bash
+   npm start
+   ```
+
+6. **웹 브라우저에서 확인**  
+   브라우저를 열고 http://localhost:3000 에 접속하여 프로젝트가 정상적으로 실행되는지 확인합니다.
    
+
 
 &nbsp;
 ## 개요
@@ -119,6 +148,29 @@ AI 템플릿 메이커는 생성형 AI와 템플릿 기능을 결합하여 소�
 - **영어로 작성된 프롬프트를 활용**하여 모델의 성능을 최적화하고, 일관성과 높은 품질의 이미지를 생성할 수 있도록 지원합니다.
 
 &nbsp;
+## 프론트 사용 기술
+<p>
+<img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=React&logoColor=white"/>  
+<img src="https://img.shields.io/badge/Unsplash-API-000000?style=flat-square&logo=Unsplash&logoColor=white" />  
+<img src="https://img.shields.io/badge/remove.bg-API-000000?style=flat-square&logo=remove.bg&logoColor=white" />  
+</p>
+
+### HTML5 (canvas)  
+- 생성형 AI를 통해 생성한 이미지 위에 사용자가 추가하고 싶은 이미지를 추가할 수 있도록 구현.
+- 사용자의 로컬 파일 업로드 및 외부 API를 통해 가져온 이미지를 드래그 앤 드롭으로 추가 가능.
+- 사용자의 입력을 기반으로 텍스트를 이미지에 실시간으로 추가.
+- 사용자가 작업을 완료한 후, 캔버스의 내용을 하나의 이미지로 내보낼 수 있음.
+
+### qrcode.react  
+- qrcode.react 라이브러리를 프로젝트에 설치해서 사용자가 원하는 내용이 담긴 QR코드를 실시간으로 생성 후 이미지에 추가할 수 있음
+
+### Unsplash API  
+- Unsplash API를 사용하여 다양한 이미지들을 가져오고, 사용자 마음껏 이미지를 추가해 이미지를 꾸밀 수 있음.
+
+### remove.bg  
+- Unsplash에서 가져온 이미지는 배경이 존재해 생성한 이미지와 잘 어울리지 않는 문제를 remove.bg API를 통해 배경을 제거하고 가운데 있는 물체만 남겨 훨씬 자연스러운 꾸미기 가능
+
+&nbsp;
 ## 시스템 구조
 ![프캡 구조도](https://github.com/user-attachments/assets/5e154cc4-0c72-418e-b9d6-4c9a2ef75721)
 
@@ -140,6 +192,16 @@ AI 템플릿 메이커는 생성형 AI와 템플릿 기능을 결합하여 소�
 | 박미정     | 이미지 생성 로직 & 광고 문자 생성 로직 구현, AI 프롬프트 최적화          |
 | 조현성     | DB 및 Azure Blob Storage 연동, 백엔드-프론트엔드 연결                 |
 | 홍승기     | 뿌리오 API 연결, 문자 발송 기능 구현                                  |
+
+
+&nbsp;
+## 프론트 구성원 및 역할 분담
+
+| 이름       | 역할                                                                 |
+|------------|----------------------------------------------------------------------|
+| 김건우     | Unsplash 및 remove.bg API 연동, 이미지 템플릿 기능 구현, UI & UX 개발   |
+| 강진희     | 이미지 템플릿 기능 구현, AI 프롬프트 최적화, UI & UX 개발                |
+
 
 &nbsp;
 ## 기타
