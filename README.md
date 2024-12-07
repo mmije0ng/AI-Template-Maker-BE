@@ -23,7 +23,7 @@
    ```
 
 6. **Gradle Build 실행**  
-   프로젝트 루트 디렉토리(Pre-Capstone-B)에서 아래 명령어를 실행하여 프로젝트를 빌드합니다:
+   프로젝트 루트 디렉토리(Pre-Capstone-BE)에서 아래 명령어를 실행하여 프로젝트를 빌드합니다:
    ```bash
    ./gradlew build
    ```
